@@ -124,7 +124,10 @@ class FoodOrderingWebsite(http.Controller):
         if user._is_public():
             return "", ""
         partner = user.partner_id
-        return partner.name or "", partner.phone or partner.mobile or ""
+        phone = partner.phone or ""
+        if not phone and "mobile" in partner._fields:
+            phone = partner.mobile or ""
+        return partner.name or "", phone
 
     @http.route("/food", type="http", auth="public", website=True, sitemap=True)
     def food_catalog(self, **kwargs):
