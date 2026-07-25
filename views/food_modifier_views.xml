@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="food_modifier_group_list" model="ir.ui.view"><field name="name">food.modifier.group.list</field><field name="model">food.modifier.group</field><field name="arch" type="xml"><list><field name="sequence" widget="handle"/><field name="name"/><field name="selection_type"/><field name="required"/><field name="max_selection"/></list></field></record>
+    <record id="food_modifier_group_form" model="ir.ui.view"><field name="name">food.modifier.group.form</field><field name="model">food.modifier.group</field><field name="arch" type="xml"><form><sheet><group><field name="name"/><field name="selection_type"/><field name="required"/><field name="max_selection" invisible="selection_type != 'multiple'"/><field name="product_tmpl_ids" widget="many2many_tags"/></group><field name="option_ids"><list editable="bottom"><field name="sequence" widget="handle"/><field name="name"/><field name="price_extra"/></list></field></sheet></form></field></record>
+    <record id="action_food_modifiers" model="ir.actions.act_window"><field name="name">Modifiers &amp; Add-ons</field><field name="res_model">food.modifier.group</field><field name="view_mode">list,form</field></record>
+    <menuitem id="menu_food_modifiers" name="Modifiers &amp; Add-ons" parent="food_ordering.menu_food_root" action="action_food_modifiers" sequence="30" groups="food_ordering.group_food_manager"/>
+    <record id="menu_food_modifiers" model="ir.ui.menu"><field name="active">False</field></record>
+</odoo>

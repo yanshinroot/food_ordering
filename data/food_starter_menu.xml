@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="starter_americano" model="product.template">
+        <field name="name">Americano</field>
+        <field name="type">consu</field>
+        <field name="list_price">3500</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="food_available_online">True</field>
+        <field name="food_is_beverage">True</field>
+        <field name="food_own_cup_eligible">True</field>
+    </record>
+    <record id="starter_milk_tea" model="product.template">
+        <field name="name">Milk Tea</field>
+        <field name="type">consu</field>
+        <field name="list_price">3000</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="food_available_online">True</field>
+        <field name="food_is_beverage">True</field>
+        <field name="food_own_cup_eligible">True</field>
+    </record>
+    <record id="starter_chicken_rice" model="product.template">
+        <field name="name">Chicken Rice</field>
+        <field name="type">consu</field>
+        <field name="list_price">6500</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="food_available_online">True</field>
+    </record>
+    <record id="starter_avocado_smoothie" model="product.template">
+        <field name="name">Avocado Smoothie</field>
+        <field name="type">consu</field>
+        <field name="list_price">4500</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="food_available_online">True</field>
+        <field name="food_is_beverage">True</field>
+        <field name="food_own_cup_eligible">True</field>
+    </record>
+    <record id="config_own_cup_discount" model="ir.config_parameter">
+        <field name="key">food_ordering.own_cup_discount</field>
+        <field name="value">500</field>
+    </record>
+    <record id="starter_cashier_device" model="food.printer.device">
+        <field name="name">Local Cashier Printer</field>
+        <field name="target">cashier</field>
+        <field name="printer_type">network</field>
+    </record>
+    <record id="starter_kitchen_device" model="food.printer.device">
+        <field name="name">Local Kitchen Printer</field>
+        <field name="target">kitchen</field>
+        <field name="printer_type">network</field>
+    </record>
+</odoo>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_food_cashier_screen" model="ir.actions.act_url">
+        <field name="name">Cashier Screen</field>
+        <field name="url">/food/cashier</field>
+        <field name="target">self</field>
+    </record>
+    <record id="action_food_kitchen_screen" model="ir.actions.act_url">
+        <field name="name">Kitchen Screen</field>
+        <field name="url">/food/kitchen</field>
+        <field name="target">self</field>
+    </record>
+    <menuitem id="menu_food_cashier_screen" name="Cashier Screen" parent="menu_food_root" action="action_food_cashier_screen" sequence="5" groups="food_ordering.group_food_cashier"/>
+    <menuitem id="menu_food_kitchen_screen" name="Kitchen Screen" parent="menu_food_root" action="action_food_kitchen_screen" sequence="6" groups="food_ordering.group_food_kitchen"/>
+
+    <template id="food_staff_dashboard" name="Food Staff Dashboard">
+        <t t-call="website.layout">
+            <t t-set="body_classname" t-value="'fo-staff-page'"/>
+            <div id="wrap" class="fo-staff-app" t-att-data-role="role" data-orders-url="/food/staff/orders" data-products-url="/food/staff/products" data-printers-url="/food/staff/printers" data-walkin-url="/food/staff/walkin" data-action-base="/food/staff/orders" t-att-data-csrf="request.csrf_token()">
+                <header class="fo-staff-header">
+                    <div class="fo-staff-brand">
+                        <img src="/food_ordering/static/src/img/foodorderlogo-clean.png" alt="Food Ordering"/>
+                        <div><span t-out="role == 'cashier' and 'Front of house' or 'Kitchen operations'"/><h1 t-out="role == 'cashier' and 'Cashier Screen' or 'Kitchen Screen'"/></div>
+                    </div>
+                    <div class="fo-staff-header-actions">
+                        <button t-if="role == 'cashier'" class="fo-new-walkin" type="button" data-open-walkin=""><i class="fa fa-plus" aria-hidden="true"/><span>New walk-in</span></button>
+                        <div class="fo-printer-chip is-offline" data-printer-chip=""><span class="fo-printer-dot"/><div><strong data-printer-label="">Printer offline</strong><small data-printer-detail="">Checking local bridge…</small></div></div>
+                        <div class="fo-live-chip"><span/><strong>Live</strong><small>Auto-refresh</small></div>
+                        <button class="fo-sound-toggle" type="button" data-sound-toggle="" aria-pressed="false"><i class="fa fa-volume-off" aria-hidden="true"/><span>Sound off</span></button>
+                        <a t-if="can_switch" t-att-href="role == 'cashier' and '/food/kitchen' or '/food/cashier'" class="fo-switch-screen"><i t-att-class="role == 'cashier' and 'fa fa-cutlery' or 'fa fa-credit-card'" aria-hidden="true"/><span t-out="role == 'cashier' and 'Kitchen' or 'Cashier'"/></a>
+                        <div class="fo-staff-clock"><strong data-staff-clock="">--:--</strong><small data-staff-date="">Today</small></div>
+                    </div>
+                </header>
+
+                <main class="fo-staff-main">
+                    <section class="fo-staff-overview" aria-label="Order overview">
+                        <div><span class="fo-overview-icon is-new"><i class="fa fa-inbox" aria-hidden="true"/></span><p><small t-out="role == 'cashier' and 'Waiting acceptance' or 'Kitchen queue'"/><strong data-stat="queue">0</strong></p></div>
+                        <div><span class="fo-overview-icon is-progress"><i class="fa fa-fire" aria-hidden="true"/></span><p><small>Preparing now</small><strong data-stat="preparing">0</strong></p></div>
+                        <div><span class="fo-overview-icon is-ready"><i class="fa fa-check" aria-hidden="true"/></span><p><small>Ready now</small><strong data-stat="ready">0</strong></p></div>
+                        <div class="fo-last-sync"><i class="fa fa-refresh" aria-hidden="true"/><span>Updated <strong data-last-sync="">just now</strong></span></div>
+                    </section>
+
+                    <section class="fo-staff-board" aria-label="Live order board">
+                        <div class="fo-order-column">
+                            <header><div><span class="fo-column-dot is-new"/><h2 t-out="role == 'cashier' and 'New orders' or 'Queue'"/></div><b data-column-count="queue">0</b></header>
+                            <div class="fo-column-orders" data-order-column="queue"/>
+                        </div>
+                        <div class="fo-order-column">
+                            <header><div><span class="fo-column-dot is-progress"/><h2 t-out="role == 'cashier' and 'In progress' or 'Preparing'"/></div><b data-column-count="preparing">0</b></header>
+                            <div class="fo-column-orders" data-order-column="preparing"/>
+                        </div>
+                        <div class="fo-order-column">
+                            <header><div><span class="fo-column-dot is-ready"/><h2>Ready</h2></div><b data-column-count="ready">0</b></header>
+                            <div class="fo-column-orders" data-order-column="ready"/>
+                        </div>
+                    </section>
+                </main>
+                <div t-if="role == 'cashier'" class="fo-pos-modal" data-walkin-modal="" aria-hidden="true">
+                    <div class="fo-pos-backdrop" data-close-modal=""/>
+                    <section class="fo-pos-panel" role="dialog" aria-modal="true" aria-labelledby="fo-walkin-title">
+                        <header class="fo-pos-topbar"><div class="fo-pos-title"><span class="fo-pos-title-icon"><i class="fa fa-shopping-basket"/></span><div><small>POINT OF SALE</small><h2 id="fo-walkin-title">Walk-in order</h2></div></div><div class="fo-pos-top-actions"><span class="fo-pos-draft"><i class="fa fa-circle"/> Draft ticket</span><button type="button" data-close-modal="" aria-label="Close"><i class="fa fa-times"/></button></div></header>
+                        <div class="fo-pos-body">
+                            <div class="fo-pos-menu"><div class="fo-pos-menu-toolbar"><label class="fo-pos-search"><i class="fa fa-search"/><input type="search" placeholder="Search products or scan item" data-product-search=""/></label><div class="fo-pos-categories"><button type="button" class="is-active" data-pos-category="all"><i class="fa fa-th-large"/>All</button><button type="button" data-pos-category="drinks"><i class="fa fa-coffee"/>Drinks</button><button type="button" data-pos-category="meals"><i class="fa fa-cutlery"/>Meals</button></div></div><div class="fo-pos-menu-heading"><div><small>MENU</small><h3>Choose an item</h3></div><span data-visible-products="">0 products</span></div><div class="fo-pos-products" data-pos-products=""><p>Loading menu…</p></div></div>
+                            <form class="fo-pos-checkout" data-walkin-form="">
+                                <div class="fo-pos-cart-head"><div><small>CURRENT TICKET</small><h3>Walk-in customer</h3></div><b data-pos-count="">0 items</b></div>
+                                <div class="fo-pos-cart" data-pos-cart=""><div class="fo-pos-empty"><i class="fa fa-shopping-basket"/><strong>Your basket is empty</strong><small>Select items from the menu.</small></div></div>
+                                <div class="fo-pos-fields"><label><span>Customer <em>Optional</em></span><input name="customer_name" placeholder="Walk-in Customer"/></label><label><span>Phone <em>Optional</em></span><input name="phone" inputmode="tel" placeholder="Walk-in"/></label><label class="is-wide"><span>Order note <em>Optional</em></span><input name="order_note" placeholder="Packing or service note"/></label></div>
+                                <div class="fo-payment-box"><small>CASH PAYMENT</small><label data-cash-field=""><span>Cash received</span><input name="amount_received" inputmode="decimal" placeholder="0"/></label><div class="fo-cash-change" data-cash-change=""><span>Change</span><strong>0 MMK</strong></div></div>
+                                <div class="fo-pos-total"><span>Total</span><strong data-pos-total="">0 MMK</strong></div>
+                                <button class="fo-charge-button" type="submit" disabled=""><span>Charge &amp; send to kitchen</span><strong data-charge-total="">0 MMK</strong></button>
+                            </form>
+                        </div>
+                    </section>
+                </div>
+                <div t-if="role == 'cashier'" class="fo-payment-modal" data-payment-modal="" aria-hidden="true">
+                    <div class="fo-pos-backdrop" data-close-payment=""/>
+                    <form class="fo-payment-panel" data-payment-form="">
+                        <header><div><small>COLLECT PAYMENT</small><h2 data-payment-order="">Order</h2></div><button type="button" data-close-payment="" aria-label="Close"><i class="fa fa-times"/></button></header>
+                        <div class="fo-payment-due"><span>Amount due</span><strong data-payment-due="">0 MMK</strong></div>
+                        <label data-cash-field=""><span>Cash received</span><input name="amount_received" inputmode="decimal" required=""/></label><div class="fo-cash-change" data-cash-change=""><span>Change</span><strong>0 MMK</strong></div><button class="fo-charge-button" type="submit">Confirm cash payment</button>
+                    </form>
+                </div>
+                <div class="fo-staff-toast" role="status" aria-live="polite" data-staff-toast=""/>
+            </div>
+        </t>
+    </template>
+</odoo>

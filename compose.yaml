@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:15
+    container_name: odoo19-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - odoo-db-data:/var/lib/postgresql/data
+    networks: [odoo]
+
+  odoo:
+    image: odoo:19.0
+    container_name: odoo19
+    restart: unless-stopped
+    depends_on: [db]
+    ports:
+      # Trusted-LAN access for the Android cashier app. Protect this port with
+      # the Windows Private-network firewall and never expose it to the internet.
+      - "0.0.0.0:8069:8069"
+    environment:
+      HOST: db
+      USER: odoo
+      PASSWORD: ${POSTGRES_PASSWORD}
+    command: ["--addons-path=/mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons"]
+    volumes:
+      - odoo-web-data:/var/lib/odoo
+      - ./custom_addons:/mnt/extra-addons
+    networks: [odoo]
+
+volumes:
+  odoo-db-data:
+    name: odoo19-db-data
+  odoo-web-data:
+    name: odoo19-web-data
+
+networks:
+  odoo:
+    name: odoo19-net

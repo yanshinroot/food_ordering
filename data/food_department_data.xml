@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="department_finance" model="food.department">
+        <field name="name">Finance</field>
+        <field name="sequence">10</field>
+    </record>
+    <record id="department_hr" model="food.department">
+        <field name="name">HR</field>
+        <field name="sequence">20</field>
+    </record>
+    <record id="department_it" model="food.department">
+        <field name="name">IT</field>
+        <field name="sequence">30</field>
+    </record>
+    <record id="department_sales" model="food.department">
+        <field name="name">Sales</field>
+        <field name="sequence">40</field>
+    </record>
+    <record id="department_operations" model="food.department">
+        <field name="name">Operations</field>
+        <field name="sequence">50</field>
+    </record>
+    <record id="department_marketing" model="food.department">
+        <field name="name">Marketing</field>
+        <field name="sequence">60</field>
+    </record>
+</odoo>

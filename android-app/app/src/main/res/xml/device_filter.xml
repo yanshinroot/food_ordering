@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Empty filter matches any attached USB device, since cheap thermal
+         printers (Nippon and similar clones) commonly misreport their USB
+         interface class instead of declaring the standard Printer class. -->
+    <usb-device />
+</resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="starter_americano" model="product.template">
+        <field name="image_1920" type="base64" file="food_ordering/static/src/img/products/americano.jpg"/>
+        <field name="description_sale">Bold espresso over ice, clean and refreshing.</field>
+    </record>
+    <record id="starter_milk_tea" model="product.template">
+        <field name="image_1920" type="base64" file="food_ordering/static/src/img/products/milk-tea.jpg"/>
+        <field name="description_sale">Creamy house-brewed tea with a silky finish.</field>
+    </record>
+    <record id="starter_chicken_rice" model="product.template">
+        <field name="image_1920" type="base64" file="food_ordering/static/src/img/products/chicken-rice.jpg"/>
+        <field name="description_sale">Tender chicken, fragrant rice and fresh sides.</field>
+    </record>
+    <record id="starter_avocado_smoothie" model="product.template">
+        <field name="image_1920" type="base64" file="food_ordering/static/src/img/products/avocado-smoothie.jpg"/>
+        <field name="description_sale">Fresh avocado blended thick, smooth and cool.</field>
+    </record>
+</odoo>

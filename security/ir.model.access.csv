@@ -1,0 +1,12 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_food_print_job_cashier,food.print.job.cashier,model_food_print_job,food_ordering.group_food_cashier,1,1,0,0
+access_food_print_job_kitchen,food.print.job.kitchen,model_food_print_job,food_ordering.group_food_kitchen,1,1,0,0
+access_food_print_job_manager,food.print.job.manager,model_food_print_job,food_ordering.group_food_manager,1,1,1,1
+access_food_printer_device_manager,food.printer.device.manager,model_food_printer_device,food_ordering.group_food_manager,1,1,1,1
+access_food_sale_order_cashier,food.sale.order.cashier,sale.model_sale_order,food_ordering.group_food_cashier,1,1,1,0
+access_food_sale_order_kitchen,food.sale.order.kitchen,sale.model_sale_order,food_ordering.group_food_kitchen,1,1,0,0
+access_food_sale_order_line_cashier,food.sale.order.line.cashier,sale.model_sale_order_line,food_ordering.group_food_cashier,1,1,1,0
+access_food_sale_order_line_kitchen,food.sale.order.line.kitchen,sale.model_sale_order_line,food_ordering.group_food_kitchen,1,0,0,0
+access_food_modifier_group_manager,food.modifier.group.manager,model_food_modifier_group,food_ordering.group_food_manager,1,1,1,1
+access_food_modifier_option_manager,food.modifier.option.manager,model_food_modifier_option,food_ordering.group_food_manager,1,1,1,1
+access_food_department_manager,food.department.manager,model_food_department,food_ordering.group_food_manager,1,1,1,1

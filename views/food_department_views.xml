@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="food_department_list" model="ir.ui.view">
+        <field name="name">food.department.list</field>
+        <field name="model">food.department</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_food_departments" model="ir.actions.act_window">
+        <field name="name">Departments</field>
+        <field name="res_model">food.department</field>
+        <field name="view_mode">list</field>
+    </record>
+    <menuitem id="menu_food_departments" name="Departments" parent="food_ordering.menu_food_root" action="action_food_departments" sequence="40" groups="food_ordering.group_food_manager"/>
+</odoo>

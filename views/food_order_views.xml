@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="sale_order_food_form" model="ir.ui.view">
+        <field name="name">sale.order.food.form</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_food_accept" type="object" string="Accept &amp; Print" class="btn-primary" invisible="not food_order or food_status != 'pending'" groups="food_ordering.group_food_cashier"/>
+                <button name="action_food_prepare" type="object" string="Start Preparing" class="btn-primary" invisible="not food_order or food_status != 'accepted'" groups="food_ordering.group_food_kitchen"/>
+                <button name="action_food_ready" type="object" string="Ready" class="btn-primary" invisible="not food_order or food_status != 'preparing'" groups="food_ordering.group_food_kitchen"/>
+                <button name="action_food_complete" type="object" string="Complete" invisible="not food_order or food_status != 'ready'" groups="food_ordering.group_food_cashier"/>
+                <field name="food_status" widget="statusbar" statusbar_visible="pending,accepted,preparing,ready,completed" invisible="not food_order"/>
+            </xpath>
+            <xpath expr="//sheet/notebook" position="inside">
+                <page string="Food Order" name="food_order" invisible="not food_order">
+                    <group>
+                        <group>
+                            <field name="food_order"/>
+                            <field name="food_order_source"/>
+                            <field name="food_customer_name"/>
+                            <field name="food_phone"/>
+                        </group>
+                        <group>
+                            <field name="food_department"/>
+                            <field name="food_floor"/>
+                            <field name="food_own_cup"/>
+                            <field name="food_note"/>
+                        </group>
+                    </group>
+                    <group string="Payment">
+                        <group>
+                            <field name="food_payment_status" widget="badge"/>
+                            <field name="food_payment_method"/>
+                            <field name="food_payment_reference"/>
+                        </group>
+                        <group>
+                            <field name="food_amount_received"/>
+                            <field name="food_change_amount"/>
+                            <field name="food_paid_at"/>
+                            <field name="food_paid_by_id"/>
+                        </group>
+                    </group>
+                    <field name="food_print_job_ids" readonly="1">
+                        <list><field name="target"/><field name="state"/><field name="device_id"/><field name="attempts"/></list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="food_order_list" model="ir.ui.view">
+        <field name="name">food.order.list</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <list decoration-warning="food_status == 'pending'" decoration-info="food_status == 'preparing'" decoration-success="food_status == 'ready'">
+                <field name="name"/><field name="date_order"/><field name="food_customer_name"/><field name="food_phone"/><field name="food_department"/><field name="food_floor"/><field name="food_order_source"/><field name="food_payment_status" widget="badge"/><field name="food_payment_method"/><field name="food_own_cup"/><field name="amount_total"/><field name="food_status" widget="badge"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_food_orders" model="ir.actions.act_window">
+        <field name="name">Food Orders</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[("food_order", "=", True)]</field>
+        <field name="view_id" ref="food_order_list"/>
+    </record>
+    <record id="action_food_customer_website" model="ir.actions.act_url">
+        <field name="name">Customer Ordering Website</field>
+        <field name="url">/food</field>
+        <field name="target">self</field>
+    </record>
+    <menuitem id="menu_food_root" name="Food Ordering" action="action_food_orders" sequence="20" groups="food_ordering.group_food_cashier,food_ordering.group_food_kitchen"/>
+    <menuitem id="menu_food_customer_website" name="Customer Website" parent="menu_food_root" action="action_food_customer_website" sequence="1"/>
+    <menuitem id="menu_food_orders" name="Orders" parent="menu_food_root" action="action_food_orders" sequence="10"/>
+</odoo>

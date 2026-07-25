@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="modifier_drink_size" model="food.modifier.group">
+        <field name="name">Size</field><field name="sequence">10</field><field name="selection_type">single</field><field name="required">True</field>
+        <field name="product_tmpl_ids" eval="[(6, 0, [ref('starter_americano'), ref('starter_milk_tea'), ref('starter_avocado_smoothie')])]"/>
+    </record>
+    <record id="option_size_regular" model="food.modifier.option"><field name="name">Regular</field><field name="group_id" ref="modifier_drink_size"/><field name="price_extra">0</field></record>
+    <record id="option_size_large" model="food.modifier.option"><field name="name">Large</field><field name="group_id" ref="modifier_drink_size"/><field name="price_extra">800</field></record>
+
+    <record id="modifier_sweetness" model="food.modifier.group">
+        <field name="name">Sweetness</field><field name="sequence">20</field><field name="selection_type">single</field><field name="required">True</field>
+        <field name="product_tmpl_ids" eval="[(6, 0, [ref('starter_milk_tea'), ref('starter_avocado_smoothie')])]"/>
+    </record>
+    <record id="option_sugar_normal" model="food.modifier.option"><field name="name">Normal sugar</field><field name="group_id" ref="modifier_sweetness"/></record>
+    <record id="option_sugar_less" model="food.modifier.option"><field name="name">Less sugar</field><field name="group_id" ref="modifier_sweetness"/></record>
+    <record id="option_sugar_none" model="food.modifier.option"><field name="name">No sugar</field><field name="group_id" ref="modifier_sweetness"/></record>
+
+    <record id="modifier_drink_addons" model="food.modifier.group">
+        <field name="name">Add-ons</field><field name="sequence">30</field><field name="selection_type">multiple</field><field name="max_selection">3</field>
+        <field name="product_tmpl_ids" eval="[(6, 0, [ref('starter_americano'), ref('starter_milk_tea'), ref('starter_avocado_smoothie')])]"/>
+    </record>
+    <record id="option_extra_shot" model="food.modifier.option"><field name="name">Extra espresso shot</field><field name="group_id" ref="modifier_drink_addons"/><field name="price_extra">1000</field></record>
+    <record id="option_oat_milk" model="food.modifier.option"><field name="name">Oat milk</field><field name="group_id" ref="modifier_drink_addons"/><field name="price_extra">800</field></record>
+    <record id="option_boba" model="food.modifier.option"><field name="name">Boba pearls</field><field name="group_id" ref="modifier_drink_addons"/><field name="price_extra">700</field></record>
+
+    <record id="modifier_meal_spice" model="food.modifier.group">
+        <field name="name">Spice level</field><field name="sequence">10</field><field name="selection_type">single</field><field name="required">True</field>
+        <field name="product_tmpl_ids" eval="[(6, 0, [ref('starter_chicken_rice')])]"/>
+    </record>
+    <record id="option_spice_mild" model="food.modifier.option"><field name="name">Mild</field><field name="group_id" ref="modifier_meal_spice"/></record>
+    <record id="option_spice_medium" model="food.modifier.option"><field name="name">Medium</field><field name="group_id" ref="modifier_meal_spice"/></record>
+    <record id="option_spice_hot" model="food.modifier.option"><field name="name">Hot</field><field name="group_id" ref="modifier_meal_spice"/></record>
+
+    <record id="modifier_meal_addons" model="food.modifier.group">
+        <field name="name">Add-ons</field><field name="sequence">20</field><field name="selection_type">multiple</field><field name="max_selection">2</field>
+        <field name="product_tmpl_ids" eval="[(6, 0, [ref('starter_chicken_rice')])]"/>
+    </record>
+    <record id="option_fried_egg" model="food.modifier.option"><field name="name">Fried egg</field><field name="group_id" ref="modifier_meal_addons"/><field name="price_extra">800</field></record>
+    <record id="option_extra_rice" model="food.modifier.option"><field name="name">Extra rice</field><field name="group_id" ref="modifier_meal_addons"/><field name="price_extra">1000</field></record>
+</odoo>

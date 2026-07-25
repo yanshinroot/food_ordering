@@ -1,0 +1,8 @@
+{
+  "name": "food-ordering-print-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Reliable ESC/POS print bridge for Odoo Food Ordering",
+  "scripts": {"start": "node src/index.js"},
+  "engines": {"node": ">=20"}
+}
