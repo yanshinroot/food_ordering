@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cashier launcher glyph: a receipt card with a coin, distinguishing this
+     flavor's icon from the Kitchen flavor's pot/steam glyph at a glance. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M32,18 L76,18 L76,90 L32,90 Z"/>
+    <path
+        android:fillColor="#17653D"
+        android:pathData="M40,30 L68,30 L68,34 L40,34 Z
+                           M40,42 L68,42 L68,46 L40,46 Z
+                           M40,54 L60,54 L60,58 L40,58 Z"/>
+    <path
+        android:fillColor="#F2A93B"
+        android:pathData="M66,78 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0 Z"/>
+</vector>

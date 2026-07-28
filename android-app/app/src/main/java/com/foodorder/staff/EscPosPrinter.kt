@@ -36,8 +36,19 @@ object PrinterBridge {
         labelWidthMm: Int = DEFAULT_LABEL_WIDTH_MM,
         textScale: Int = DEFAULT_TEXT_SCALE,
         tearMarginMm: Int = DEFAULT_TEAR_MARGIN_MM,
+        cutterEnabled: Boolean = true,
+        encoding: String = "utf-8",
     ): ByteArray = when (protocol) {
-        PrinterProtocol.ESC_POS -> escPosReceipt(payload)
+        // Paper width (58/80mm) from the paired device's server config is
+        // deliberately not applied here yet: it's meaningful for an ESC/POS
+        // receipt roll, but the printer auto-wraps by physical width today
+        // rather than this code doing manual column wrapping, and TSPL's
+        // labelWidthMm is a separately hand-calibrated per-printer setting
+        // (see Setup's tear-margin note) that a generic 58/80 value would
+        // clobber. Applying it correctly needs a text-wrapping pass, tracked
+        // as a follow-up rather than risked here — see the final report's
+        // known-limitations list.
+        PrinterProtocol.ESC_POS -> escPosReceipt(payload, cutterEnabled, encoding)
         PrinterProtocol.SATO_SBPL -> satoReceipt(payload)
         PrinterProtocol.TSPL -> tsplReceipt(payload, labelWidthMm, textScale, tearMarginMm)
     }
@@ -47,6 +58,8 @@ object PrinterBridge {
         labelWidthMm: Int = DEFAULT_LABEL_WIDTH_MM,
         textScale: Int = DEFAULT_TEXT_SCALE,
         tearMarginMm: Int = DEFAULT_TEAR_MARGIN_MM,
+        cutterEnabled: Boolean = true,
+        encoding: String = "utf-8",
     ): ByteArray {
         val payload = JSONObject()
             .put("target", "cashier")
@@ -55,13 +68,26 @@ object PrinterBridge {
             .put("currency", "MMK")
             .put("customer", JSONObject().put("name", "Printer Test").put("phone", "-").put("department", "Counter").put("floor", "-").put("note", "Connection OK"))
             .put("lines", org.json.JSONArray().put(JSONObject().put("quantity", 1).put("name", "Americano").put("subtotal", 3500).put("own_cup_quantity", 1)))
-        return receipt(payload, protocol, labelWidthMm, textScale, tearMarginMm)
+        return receipt(payload, protocol, labelWidthMm, textScale, tearMarginMm, cutterEnabled, encoding)
     }
 
-    private fun escPosReceipt(payload: JSONObject): ByteArray {
+    /** cp874 (Thai codepage) is ASCII-compatible for Latin text but, like
+     *  plain "ascii", cannot represent Myanmar glyphs — printers without a
+     *  Myanmar-capable firmware/font need one of these two fallbacks
+     *  instead of raw UTF-8 (see food.printer.device's encoding field and
+     *  docs/PRINTING_SETUP.md). Non-representable characters degrade to
+     *  "?" rather than corrupting the rest of the ticket. */
+    private fun charsetFor(encoding: String) = when (encoding) {
+        "ascii" -> Charsets.US_ASCII
+        "cp874" -> runCatching { charset("windows-874") }.getOrDefault(Charsets.US_ASCII)
+        else -> Charsets.UTF_8
+    }
+
+    private fun escPosReceipt(payload: JSONObject, cutterEnabled: Boolean, encoding: String): ByteArray {
         val output = ByteArrayOutputStream()
+        val charset = charsetFor(encoding)
         fun bytes(vararg values: Int) = output.write(values.map(Int::toByte).toByteArray())
-        fun text(value: String) = output.write(value.toByteArray(Charsets.UTF_8))
+        fun text(value: String) = output.write(value.toByteArray(charset))
         val customer = payload.getJSONObject("customer")
         bytes(0x1B, 0x40, 0x1B, 0x61, 0x01, 0x1B, 0x45, 0x01)
         text("FOOD ORDER\n${payload.optString("target").uppercase()} · ${payload.optString("order_number")}\n")
@@ -84,7 +110,7 @@ object PrinterBridge {
         text("TOTAL: ${"%.0f".format(payload.optDouble("amount_total"))} ${payload.optString("currency")}\n")
         bytes(0x1B, 0x45, 0x00)
         text("\n\n\n")
-        bytes(0x1D, 0x56, 0x00)
+        if (cutterEnabled) bytes(0x1D, 0x56, 0x00)
         return output.toByteArray()
     }
 

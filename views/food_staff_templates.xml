@@ -16,7 +16,17 @@
     <template id="food_staff_dashboard" name="Food Staff Dashboard">
         <t t-call="website.layout">
             <t t-set="body_classname" t-value="'fo-staff-page'"/>
-            <div id="wrap" class="fo-staff-app" t-att-data-role="role" data-orders-url="/food/staff/orders" data-products-url="/food/staff/products" data-printers-url="/food/staff/printers" data-walkin-url="/food/staff/walkin" data-action-base="/food/staff/orders" t-att-data-csrf="request.csrf_token()">
+            <div id="wrap" class="fo-staff-app" t-att-data-role="role"
+                 data-orders-url="/food/staff/orders" data-products-url="/food/staff/products"
+                 data-printers-url="/food/staff/printers" data-walkin-url="/food/staff/walkin"
+                 data-action-base="/food/staff/orders" data-print-retry-base="/food/staff/print/jobs"
+                 data-session-base="/food/staff/session"
+                 t-att-data-csrf="request.csrf_token()"
+                 t-att-data-is-manager="is_manager and '1' or '0'"
+                 t-att-data-sla-warn="sla_warn_minutes" t-att-data-sla-late="sla_late_minutes">
+                <div class="fo-offline-banner" data-offline-banner="" role="status" aria-live="polite" hidden="hidden">
+                    <i class="fa fa-wifi" aria-hidden="true"/><span>Offline — actions are unavailable until the connection returns.</span>
+                </div>
                 <header class="fo-staff-header">
                     <div class="fo-staff-brand">
                         <img src="/food_ordering/static/src/img/foodorderlogo-clean.png" alt="Food Ordering"/>
@@ -24,25 +34,37 @@
                     </div>
                     <div class="fo-staff-header-actions">
                         <button t-if="role == 'cashier'" class="fo-new-walkin" type="button" data-open-walkin=""><i class="fa fa-plus" aria-hidden="true"/><span>New walk-in</span></button>
+                        <button t-if="role == 'cashier'" class="fo-shift-chip" type="button" data-open-session="" t-att-class="cash_session and 'fo-shift-chip is-open' or 'fo-shift-chip'">
+                            <i class="fa fa-money" aria-hidden="true"/>
+                            <div><strong t-out="cash_session and 'Shift open' or 'Shift closed'"/><small data-shift-summary=""><t t-if="cash_session">Expected <t t-out="'%.0f' % cash_session.closing_cash_expected"/></t><t t-else="">Tap to open</t></small></div>
+                        </button>
+                        <button t-if="role == 'kitchen'" class="fo-fullscreen-toggle" type="button" data-fullscreen-toggle="" aria-pressed="false"><i class="fa fa-arrows-alt" aria-hidden="true"/><span>Full screen</span></button>
                         <div class="fo-printer-chip is-offline" data-printer-chip=""><span class="fo-printer-dot"/><div><strong data-printer-label="">Printer offline</strong><small data-printer-detail="">Checking local bridge…</small></div></div>
-                        <div class="fo-live-chip"><span/><strong>Live</strong><small>Auto-refresh</small></div>
+                        <div class="fo-live-chip" data-live-chip=""><span/><strong data-live-label="">Live</strong><small>Auto-refresh</small></div>
                         <button class="fo-sound-toggle" type="button" data-sound-toggle="" aria-pressed="false"><i class="fa fa-volume-off" aria-hidden="true"/><span>Sound off</span></button>
                         <a t-if="can_switch" t-att-href="role == 'cashier' and '/food/kitchen' or '/food/cashier'" class="fo-switch-screen"><i t-att-class="role == 'cashier' and 'fa fa-cutlery' or 'fa fa-credit-card'" aria-hidden="true"/><span t-out="role == 'cashier' and 'Kitchen' or 'Cashier'"/></a>
                         <div class="fo-staff-clock"><strong data-staff-clock="">--:--</strong><small data-staff-date="">Today</small></div>
                     </div>
                 </header>
 
+                <div class="fo-staff-toolbar" role="search">
+                    <label class="fo-toolbar-search"><i class="fa fa-search" aria-hidden="true"/><input type="search" placeholder="Search order #, name or phone" data-staff-search="" aria-label="Search orders"/></label>
+                    <label class="fo-toolbar-filter"><i class="fa fa-filter" aria-hidden="true"/><input type="text" placeholder="Filter department/floor" data-staff-filter="" aria-label="Filter by department or floor"/></label>
+                    <button class="fo-refresh-button" type="button" data-manual-refresh=""><i class="fa fa-refresh" aria-hidden="true"/><span>Refresh</span></button>
+                    <div class="fo-last-sync"><span>Updated <strong data-last-sync="">just now</strong></span></div>
+                </div>
+
                 <main class="fo-staff-main">
                     <section class="fo-staff-overview" aria-label="Order overview">
                         <div><span class="fo-overview-icon is-new"><i class="fa fa-inbox" aria-hidden="true"/></span><p><small t-out="role == 'cashier' and 'Waiting acceptance' or 'Kitchen queue'"/><strong data-stat="queue">0</strong></p></div>
                         <div><span class="fo-overview-icon is-progress"><i class="fa fa-fire" aria-hidden="true"/></span><p><small>Preparing now</small><strong data-stat="preparing">0</strong></p></div>
                         <div><span class="fo-overview-icon is-ready"><i class="fa fa-check" aria-hidden="true"/></span><p><small>Ready now</small><strong data-stat="ready">0</strong></p></div>
-                        <div class="fo-last-sync"><i class="fa fa-refresh" aria-hidden="true"/><span>Updated <strong data-last-sync="">just now</strong></span></div>
+                        <div t-if="role == 'cashier'"><span class="fo-overview-icon is-recent"><i class="fa fa-history" aria-hidden="true"/></span><p><small>Completed today</small><strong data-stat="recent">0</strong></p></div>
                     </section>
 
-                    <section class="fo-staff-board" aria-label="Live order board">
+                    <section t-att-class="role == 'cashier' and 'fo-staff-board fo-board-4' or 'fo-staff-board fo-board-3'" aria-label="Live order board">
                         <div class="fo-order-column">
-                            <header><div><span class="fo-column-dot is-new"/><h2 t-out="role == 'cashier' and 'New orders' or 'Queue'"/></div><b data-column-count="queue">0</b></header>
+                            <header><div><span class="fo-column-dot is-new"/><h2 t-out="role == 'cashier' and 'New orders' or 'New / Accepted'"/></div><b data-column-count="queue">0</b></header>
                             <div class="fo-column-orders" data-order-column="queue"/>
                         </div>
                         <div class="fo-order-column">
@@ -53,8 +75,14 @@
                             <header><div><span class="fo-column-dot is-ready"/><h2>Ready</h2></div><b data-column-count="ready">0</b></header>
                             <div class="fo-column-orders" data-order-column="ready"/>
                         </div>
+                        <div t-if="role == 'cashier'" class="fo-order-column">
+                            <header><div><span class="fo-column-dot is-recent"/><h2>Completed / Recent</h2></div><b data-column-count="recent">0</b></header>
+                            <div class="fo-column-orders" data-order-column="recent"/>
+                        </div>
                     </section>
                 </main>
+
+                <!-- Walk-in POS (Cashier only) -->
                 <div t-if="role == 'cashier'" class="fo-pos-modal" data-walkin-modal="" aria-hidden="true">
                     <div class="fo-pos-backdrop" data-close-modal=""/>
                     <section class="fo-pos-panel" role="dialog" aria-modal="true" aria-labelledby="fo-walkin-title">
@@ -65,22 +93,100 @@
                                 <div class="fo-pos-cart-head"><div><small>CURRENT TICKET</small><h3>Walk-in customer</h3></div><b data-pos-count="">0 items</b></div>
                                 <div class="fo-pos-cart" data-pos-cart=""><div class="fo-pos-empty"><i class="fa fa-shopping-basket"/><strong>Your basket is empty</strong><small>Select items from the menu.</small></div></div>
                                 <div class="fo-pos-fields"><label><span>Customer <em>Optional</em></span><input name="customer_name" placeholder="Walk-in Customer"/></label><label><span>Phone <em>Optional</em></span><input name="phone" inputmode="tel" placeholder="Walk-in"/></label><label class="is-wide"><span>Order note <em>Optional</em></span><input name="order_note" placeholder="Packing or service note"/></label></div>
-                                <div class="fo-payment-box"><small>CASH PAYMENT</small><label data-cash-field=""><span>Cash received</span><input name="amount_received" inputmode="decimal" placeholder="0"/></label><div class="fo-cash-change" data-cash-change=""><span>Change</span><strong>0 MMK</strong></div></div>
+                                <div class="fo-pos-promo" data-pos-promo="" hidden="hidden"><i class="fa fa-tag" aria-hidden="true"/><span data-pos-promo-text=""/></div>
+                                <div class="fo-payment-box"><small>CASH PAYMENT</small><label data-cash-field=""><span>Cash received</span><input name="amount_received" inputmode="decimal" placeholder="0" data-keypad-target=""/></label><div class="fo-quick-amounts" data-quick-amounts=""/><div class="fo-cash-change" data-cash-change=""><span>Change</span><strong>0 MMK</strong></div></div>
                                 <div class="fo-pos-total"><span>Total</span><strong data-pos-total="">0 MMK</strong></div>
+                                <p class="fo-inline-error" data-walkin-error="" role="alert" hidden="hidden"/>
                                 <button class="fo-charge-button" type="submit" disabled=""><span>Charge &amp; send to kitchen</span><strong data-charge-total="">0 MMK</strong></button>
                             </form>
                         </div>
                     </section>
                 </div>
+
+                <!-- Payment dialog (Cashier only) -->
                 <div t-if="role == 'cashier'" class="fo-payment-modal" data-payment-modal="" aria-hidden="true">
                     <div class="fo-pos-backdrop" data-close-payment=""/>
-                    <form class="fo-payment-panel" data-payment-form="">
-                        <header><div><small>COLLECT PAYMENT</small><h2 data-payment-order="">Order</h2></div><button type="button" data-close-payment="" aria-label="Close"><i class="fa fa-times"/></button></header>
+                    <form class="fo-payment-panel" data-payment-form="" role="dialog" aria-modal="true" aria-labelledby="fo-payment-title">
+                        <header><div><small>COLLECT PAYMENT</small><h2 id="fo-payment-title" data-payment-order="">Order</h2></div><button type="button" data-close-payment="" aria-label="Close"><i class="fa fa-times"/></button></header>
                         <div class="fo-payment-due"><span>Amount due</span><strong data-payment-due="">0 MMK</strong></div>
-                        <label data-cash-field=""><span>Cash received</span><input name="amount_received" inputmode="decimal" required=""/></label><div class="fo-cash-change" data-cash-change=""><span>Change</span><strong>0 MMK</strong></div><button class="fo-charge-button" type="submit">Confirm cash payment</button>
+                        <label data-cash-field=""><span>Cash received</span><input name="amount_received" inputmode="decimal" required="required" data-keypad-target=""/></label>
+                        <div class="fo-quick-amounts" data-quick-amounts=""/>
+                        <div class="fo-cash-change" data-cash-change=""><span>Change</span><strong>0 MMK</strong></div>
+                        <p class="fo-inline-error" data-payment-error="" role="alert" hidden="hidden"/>
+                        <button class="fo-charge-button" type="submit" data-payment-submit=""><span>Confirm cash payment</span></button>
                     </form>
                 </div>
+
+                <!-- Refund / cancel dialog (Cashier only) -->
+                <div t-if="role == 'cashier'" class="fo-refund-modal" data-refund-modal="" aria-hidden="true">
+                    <div class="fo-pos-backdrop" data-close-refund=""/>
+                    <form class="fo-refund-panel" data-refund-form="" role="dialog" aria-modal="true" aria-labelledby="fo-refund-title">
+                        <header><div><small data-refund-kind="">CANCEL ORDER</small><h2 id="fo-refund-title" data-refund-order="">Order</h2></div><button type="button" data-close-refund="" aria-label="Close"><i class="fa fa-times"/></button></header>
+                        <div class="fo-refund-amount-row" data-refund-amount-row="" hidden="hidden">
+                            <span>Amount to refund</span>
+                            <strong><input name="amount" inputmode="decimal" data-refund-amount=""/></strong>
+                        </div>
+                        <label><span>Reason <em>Required</em></span><textarea name="reason" rows="2" required="required" placeholder="Explain why this order is being cancelled/refunded"/></label>
+                        <label data-manager-pin-field="" hidden="hidden"><span>Manager PIN <em>Required for paid orders</em></span><input name="manager_pin" type="password" inputmode="numeric" autocomplete="off"/></label>
+                        <p class="fo-refund-note" data-refund-cash-note="" hidden="hidden"><i class="fa fa-info-circle" aria-hidden="true"/> This will be recorded as a cash-out against the current shift.</p>
+                        <p class="fo-inline-error" data-refund-error="" role="alert" hidden="hidden"/>
+                        <button class="fo-charge-button fo-danger-charge" type="submit" data-refund-submit=""><span data-refund-submit-label="">Confirm cancellation</span></button>
+                    </form>
+                </div>
+
+                <!-- Cash session dialog (Cashier only) -->
+                <div t-if="role == 'cashier'" class="fo-session-modal" data-session-modal="" aria-hidden="true">
+                    <div class="fo-pos-backdrop" data-close-session=""/>
+                    <section class="fo-session-panel" role="dialog" aria-modal="true" aria-labelledby="fo-session-title">
+                        <header><div><small>CASH SESSION</small><h2 id="fo-session-title">Shift</h2></div><button type="button" data-close-session="" aria-label="Close"><i class="fa fa-times"/></button></header>
+                        <form data-session-open-form="" data-session-closed-view="">
+                            <p>Count the float in the drawer and enter it below to open your shift.</p>
+                            <label><span>Opening cash</span><input name="opening_cash" inputmode="decimal" required="required" placeholder="0"/></label>
+                            <p class="fo-inline-error" data-session-error="" role="alert" hidden="hidden"/>
+                            <button class="fo-charge-button" type="submit">Open shift</button>
+                        </form>
+                        <div data-session-open-view="" hidden="hidden">
+                            <div class="fo-session-summary">
+                                <div><span>Opened by</span><strong data-session-opened-by=""/></div>
+                                <div><span>Opening cash</span><strong data-session-opening=""/></div>
+                                <div><span>Cash sales</span><strong data-session-sales=""/></div>
+                                <div><span>Refunds</span><strong data-session-refunds=""/></div>
+                                <div><span>Cash in</span><strong data-session-cash-in=""/></div>
+                                <div><span>Cash out</span><strong data-session-cash-out=""/></div>
+                                <div class="fo-session-expected"><span>Expected in drawer</span><strong data-session-expected=""/></div>
+                            </div>
+                            <form class="fo-session-movement-form" data-session-movement-form="">
+                                <label><span>Amount</span><input name="amount" inputmode="decimal" placeholder="0"/></label>
+                                <label><span>Reason</span><input name="reason" placeholder="e.g. change float top-up"/></label>
+                                <div class="fo-session-movement-actions">
+                                    <button type="button" data-movement-type="cash_in">Cash in</button>
+                                    <button type="button" data-movement-type="cash_out">Cash out</button>
+                                </div>
+                            </form>
+                            <form class="fo-session-close-form" data-session-close-form="">
+                                <label><span>Actual closing cash (count the drawer)</span><input name="closing_cash_actual" inputmode="decimal" required="required" placeholder="0"/></label>
+                                <p class="fo-inline-error" data-session-close-error="" role="alert" hidden="hidden"/>
+                                <button class="fo-charge-button fo-danger-charge" type="submit">Close shift</button>
+                            </form>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Order detail / event timeline dialog (shared) -->
+                <div class="fo-detail-modal" data-detail-modal="" aria-hidden="true">
+                    <div class="fo-pos-backdrop" data-close-detail=""/>
+                    <section class="fo-detail-panel" role="dialog" aria-modal="true" aria-labelledby="fo-detail-title">
+                        <header><div><small>ORDER DETAILS</small><h2 id="fo-detail-title" data-detail-title="">Order</h2></div><button type="button" data-close-detail="" aria-label="Close"><i class="fa fa-times"/></button></header>
+                        <div class="fo-detail-body" data-detail-body=""/>
+                        <div class="fo-detail-timeline-head"><i class="fa fa-history" aria-hidden="true"/><span>Event history</span></div>
+                        <ol class="fo-detail-timeline" data-detail-timeline=""/>
+                    </section>
+                </div>
+
                 <div class="fo-staff-toast" role="status" aria-live="polite" data-staff-toast=""/>
+                <div class="fo-kitchen-undo" data-kitchen-undo="" hidden="hidden" role="status" aria-live="polite">
+                    <span data-kitchen-undo-text=""/><button type="button" data-kitchen-undo-action="">Undo</button>
+                </div>
             </div>
         </t>
     </template>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="category_momo" model="food.menu.category">
+        <field name="name">Momo</field>
+        <field name="sequence">10</field>
+        <field name="icon">🥟</field>
+    </record>
+    <record id="category_thakali" model="food.menu.category">
+        <field name="name">Thakali</field>
+        <field name="sequence">20</field>
+        <field name="icon">🍛</field>
+    </record>
+    <record id="category_newari" model="food.menu.category">
+        <field name="name">Newari</field>
+        <field name="sequence">30</field>
+        <field name="icon">🍲</field>
+    </record>
+</odoo>

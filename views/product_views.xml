@@ -8,10 +8,69 @@
             <xpath expr="//div[@name='list_price_uom']" position="after">
                 <group string="Food Ordering">
                     <field name="food_available_online"/>
+                    <field name="food_category_id"/>
                     <field name="food_is_beverage"/>
                     <field name="food_own_cup_eligible" invisible="not food_is_beverage"/>
                 </group>
             </xpath>
         </field>
     </record>
+
+    <record id="food_menu_item_kanban" model="ir.ui.view">
+        <field name="name">food.menu.item.kanban</field>
+        <field name="model">product.template</field>
+        <field name="arch" type="xml">
+            <kanban default_order="name">
+                <templates>
+                    <t t-name="card" class="row g-0">
+                        <aside class="col-4 pe-2">
+                            <field name="image_512" widget="image" options="{'img_class': 'o_image_64_contain mw-100'}" alt="Menu item"/>
+                        </aside>
+                        <main class="col-8">
+                            <div class="h5 mb-1"><field name="name"/></div>
+                            <div><field name="food_category_id"/></div>
+                            <div>Price: <field name="list_price" widget="monetary"/></div>
+                            <field name="food_available_online" widget="boolean_toggle"/>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="food_menu_item_list" model="ir.ui.view">
+        <field name="name">food.menu.item.list</field>
+        <field name="model">product.template</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="image_128" widget="image" options="{'img_class': 'o_image_24_cover'}"/>
+                <field name="name"/>
+                <field name="food_category_id"/>
+                <field name="list_price" widget="monetary"/>
+                <field name="food_available_online" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_food_menu_items" model="ir.actions.act_window">
+        <field name="name">Menu Items</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[("food_available_online", "=", True)]</field>
+        <field name="context">{'default_food_available_online': True, 'default_sale_ok': True, 'default_type': 'consu'}</field>
+        <field name="help" type="html"><p class="o_view_nocontent_smiling_face">Add your first menu item</p><p>Set a photo, category and price — it appears on the food ordering page right away.</p></field>
+    </record>
+    <record id="action_food_menu_items_kanban_view" model="ir.actions.act_window.view">
+        <field name="sequence">1</field>
+        <field name="view_mode">kanban</field>
+        <field name="view_id" ref="food_menu_item_kanban"/>
+        <field name="act_window_id" ref="action_food_menu_items"/>
+    </record>
+    <record id="action_food_menu_items_list_view" model="ir.actions.act_window.view">
+        <field name="sequence">2</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="food_menu_item_list"/>
+        <field name="act_window_id" ref="action_food_menu_items"/>
+    </record>
+    <menuitem id="menu_food_menu_items" name="Menu Items" parent="food_ordering.menu_food_root" action="action_food_menu_items" sequence="5" groups="food_ordering.group_food_manager"/>
 </odoo>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="food_promotion_list" model="ir.ui.view">
+        <field name="name">food.promotion.list</field>
+        <field name="model">food.promotion</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="priority"/><field name="name"/><field name="discount_type"/>
+                <field name="date_from"/><field name="date_to"/><field name="min_order_amount"/>
+                <field name="stackable"/><field name="show_on_banner"/><field name="active"/>
+            </list>
+        </field>
+    </record>
+    <record id="food_promotion_form" model="ir.ui.view">
+        <field name="name">food.promotion.form</field>
+        <field name="model">food.promotion</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="active"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="min_order_amount"/>
+                            <field name="priority"/>
+                            <field name="stackable"/>
+                        </group>
+                        <group>
+                            <field name="discount_type"/>
+                            <field name="discount_value" invisible="discount_type == 'free_product'"/>
+                            <field name="free_product_id" invisible="discount_type != 'free_product'"/>
+                            <field name="free_product_qty" invisible="discount_type != 'free_product'"/>
+                            <field name="usage_limit_per_customer"/>
+                        </group>
+                    </group>
+                    <group string="Eligibility">
+                        <field name="product_tmpl_ids" widget="many2many_tags"/>
+                        <field name="category_ids" widget="many2many_tags"/>
+                    </group>
+                    <group string="Customer Website Banner">
+                        <field name="show_on_banner"/>
+                        <field name="banner_headline"/>
+                        <field name="banner_subtext"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_food_promotions" model="ir.actions.act_window">
+        <field name="name">Promotions</field><field name="res_model">food.promotion</field><field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_food_promotions" name="Promotions" parent="food_ordering.menu_food_root" action="action_food_promotions" sequence="35" groups="food_ordering.group_food_manager"/>
+</odoo>

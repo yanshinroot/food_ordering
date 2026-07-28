@@ -9,6 +9,11 @@ class ProductTemplate(models.Model):
         help="Show this product on the public food ordering page.",
     )
     food_is_beverage = fields.Boolean(string="Beverage")
+    food_category_id = fields.Many2one(
+        "food.menu.category",
+        string="Menu Category",
+        help="Menu category shown as a filter chip on the food ordering page.",
+    )
     food_own_cup_eligible = fields.Boolean(
         string="Own-cup Eligible",
         help="The own-cup discount can be applied to this product.",

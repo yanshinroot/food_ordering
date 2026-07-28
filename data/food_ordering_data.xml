@@ -7,4 +7,11 @@
         <field name="purchase_ok">False</field>
         <field name="list_price">0</field>
     </record>
+    <record id="product_promotion_discount" model="product.product">
+        <field name="name">Promotion Discount</field>
+        <field name="type">service</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="list_price">0</field>
+    </record>
 </odoo>

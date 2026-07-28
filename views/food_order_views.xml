@@ -20,12 +20,14 @@
                             <field name="food_order_source"/>
                             <field name="food_customer_name"/>
                             <field name="food_phone"/>
+                            <field name="food_promotion_id"/>
                         </group>
                         <group>
                             <field name="food_department"/>
                             <field name="food_floor"/>
                             <field name="food_own_cup"/>
                             <field name="food_note"/>
+                            <field name="food_cancel_reason" invisible="food_status != 'cancelled'"/>
                         </group>
                     </group>
                     <group string="Payment">
@@ -33,6 +35,7 @@
                             <field name="food_payment_status" widget="badge"/>
                             <field name="food_payment_method"/>
                             <field name="food_payment_reference"/>
+                            <field name="food_cash_session_id"/>
                         </group>
                         <group>
                             <field name="food_amount_received"/>
@@ -41,8 +44,14 @@
                             <field name="food_paid_by_id"/>
                         </group>
                     </group>
+                    <field name="food_payment_ids" readonly="1">
+                        <list><field name="create_date"/><field name="payment_type"/><field name="method"/><field name="amount"/><field name="reference"/></list>
+                    </field>
                     <field name="food_print_job_ids" readonly="1">
-                        <list><field name="target"/><field name="state"/><field name="device_id"/><field name="attempts"/></list>
+                        <list><field name="target"/><field name="state"/><field name="device_id"/><field name="attempts"/><field name="is_reprint"/></list>
+                    </field>
+                    <field name="food_event_ids" readonly="1">
+                        <list><field name="create_date"/><field name="event_type"/><field name="previous_status"/><field name="new_status"/><field name="reason"/><field name="actor_user_id"/><field name="actor_device_id"/></list>
                     </field>
                 </page>
             </xpath>
@@ -70,7 +79,13 @@
         <field name="url">/food</field>
         <field name="target">self</field>
     </record>
+    <record id="action_food_qr_page" model="ir.actions.act_url">
+        <field name="name">QR Code</field>
+        <field name="url">/food/qr</field>
+        <field name="target">self</field>
+    </record>
     <menuitem id="menu_food_root" name="Food Ordering" action="action_food_orders" sequence="20" groups="food_ordering.group_food_cashier,food_ordering.group_food_kitchen"/>
     <menuitem id="menu_food_customer_website" name="Customer Website" parent="menu_food_root" action="action_food_customer_website" sequence="1"/>
+    <menuitem id="menu_food_qr" name="QR Code" parent="menu_food_root" action="action_food_qr_page" sequence="2"/>
     <menuitem id="menu_food_orders" name="Orders" parent="menu_food_root" action="action_food_orders" sequence="10"/>
 </odoo>

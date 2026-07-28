@@ -19,14 +19,26 @@ try {
 
 const ESC = Buffer.from([0x1b]);
 const GS = Buffer.from([0x1d]);
-const text = (value = "") => Buffer.from(String(value), "utf8");
+// Dependency-free by design (see README): only UTF-8 passthrough and an
+// ASCII-safe fallback are implemented. True codepage transcoding (e.g. for
+// legacy printers without Unicode firmware) would need iconv-lite and is
+// documented as a hardware-commissioning limitation in
+// docs/PRINTING_SETUP.md instead of adding a new dependency here.
+const asciiSafe = (value) => String(value || "").replace(/[^\x20-\x7e]/g, "?");
+const encodeText = (value, encoding) =>
+  Buffer.from(encoding === "ascii" ? asciiSafe(value) : String(value ?? ""), "utf8");
+const widthForPaper = (paperWidthMm) => (String(paperWidthMm) === "58" ? 32 : 42);
 const line = (left, right = "", width = 42) => {
   const lhs = String(left);
   const rhs = String(right);
   return `${lhs}${" ".repeat(Math.max(1, width - lhs.length - rhs.length))}${rhs}\n`;
 };
 
-function receipt(payload) {
+function receipt(payload, options = {}) {
+  const encoding = options.encoding || "utf-8";
+  const width = widthForPaper(options.paperWidthMm);
+  const cutterEnabled = options.cutterEnabled !== false;
+  const text = (value) => encodeText(value, encoding);
   const customer = payload.customer || {};
   const chunks = [
     ESC, Buffer.from([0x40]),
@@ -34,23 +46,29 @@ function receipt(payload) {
     ESC, Buffer.from([0x45, 0x01]), text("FOOD ORDER\n"),
     text(`${payload.target.toUpperCase()} - ${payload.order_number}\n`),
     ESC, Buffer.from([0x45, 0x00, 0x61, 0x00]),
-    text("------------------------------------------\n"),
+    text("-".repeat(width) + "\n"),
     text(`Name: ${customer.name}\nPhone: ${customer.phone}\n`),
     text(`Department: ${customer.department}  Floor: ${customer.floor}\n`),
     text(`Own cup: ${customer.own_cup ? "YES" : "NO"}\n`),
   ];
+  if (payload.promotion) chunks.push(text(`Promotion: ${payload.promotion}\n`));
   if (customer.note) chunks.push(ESC, Buffer.from([0x45, 0x01]), text(`NOTE: ${customer.note}\n`), ESC, Buffer.from([0x45, 0x00]));
-  chunks.push(text("------------------------------------------\n"));
+  chunks.push(text("-".repeat(width) + "\n"));
   for (const item of payload.lines || []) {
-    chunks.push(text(line(`${item.quantity} x ${item.name}`, Number(item.subtotal).toFixed(2))));
+    chunks.push(text(line(`${item.quantity} x ${item.name}`, Number(item.subtotal).toFixed(2), width)));
     if (Number(item.own_cup_quantity || 0) > 0) chunks.push(text(`  Own cup x ${item.own_cup_quantity}\n`));
+    for (const modifier of item.modifier_details || []) {
+      const extra = Number(modifier.price_extra || 0);
+      chunks.push(text(`  ${modifier.group}: ${modifier.option}${extra ? " (+" + extra.toFixed(0) + ")" : ""}\n`));
+    }
     if (item.note) chunks.push(text(`  Note: ${item.note}\n`));
   }
   chunks.push(
-    text("------------------------------------------\n"),
-    ESC, Buffer.from([0x45, 0x01]), text(line("TOTAL", `${Number(payload.amount_total).toFixed(2)} ${payload.currency}`)),
-    ESC, Buffer.from([0x45, 0x00]), text("\n\n\n"), GS, Buffer.from([0x56, 0x00])
+    text("-".repeat(width) + "\n"),
+    ESC, Buffer.from([0x45, 0x01]), text(line("TOTAL", `${Number(payload.amount_total).toFixed(2)} ${payload.currency}`, width)),
+    ESC, Buffer.from([0x45, 0x00]), text("\n\n\n"),
   );
+  if (cutterEnabled) chunks.push(GS, Buffer.from([0x56, 0x00]));
   return Buffer.concat(chunks);
 }
 
@@ -121,17 +139,24 @@ function saveLedger() {
 }
 
 async function processJob(job) {
-  if (printedJobs.has(job.id)) {
+  // Keyed by id+template_version, not just id: a reprint reuses the same
+  // job row with a bumped template_version, so this still prints it while
+  // a genuine duplicate delivery of the exact same version is skipped.
+  const ledgerKey = `${job.id}:${job.template_version || 1}`;
+  if (printedJobs.has(ledgerKey)) {
     await acknowledge(job.id, true);
     return;
   }
   try {
     const protocol = String(config.protocol || "escpos").toLowerCase();
-    const data = protocol === "sato_sbpl" ? satoReceipt(job.payload) : receipt(job.payload);
+    const options = {
+      encoding: job.encoding, paperWidthMm: job.paper_width_mm, cutterEnabled: job.cutter_enabled,
+    };
+    const data = protocol === "sato_sbpl" ? satoReceipt(job.payload) : receipt(job.payload, options);
     if (config.printer.type === "network") await printNetwork(data);
     else if (config.printer.type === "windows") await printWindows(data);
     else throw new Error(`Unsupported printer type: ${config.printer.type}`);
-    printedJobs.add(job.id);
+    printedJobs.add(ledgerKey);
     saveLedger();
     await acknowledge(job.id, true);
     console.log(`Printed job ${job.id} / ${job.payload.order_number}`);

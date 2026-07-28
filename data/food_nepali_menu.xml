@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="menu_momo_chicken" model="product.template">
+        <field name="name">C. Momo</field>
+        <field name="type">consu</field>
+        <field name="list_price">190</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="food_available_online">True</field>
+        <field name="food_category_id" ref="category_momo"/>
+        <field name="description_sale">Steamed chicken dumplings served with our house achar.</field>
+    </record>
+    <record id="menu_momo_buff" model="product.template">
+        <field name="name">Buff. Momo</field>
+        <field name="type">consu</field>
+        <field name="list_price">140</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="food_available_online">True</field>
+        <field name="food_category_id" ref="category_momo"/>
+        <field name="description_sale">Classic buffalo momo, steamed and served with tomato achar.</field>
+    </record>
+    <record id="menu_momo_pork" model="product.template">
+        <field name="name">Pork Momo</field>
+        <field name="type">consu</field>
+        <field name="list_price">200</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="food_available_online">True</field>
+        <field name="food_category_id" ref="category_momo"/>
+        <field name="description_sale">Juicy pork momo, steamed and served with our signature achar.</field>
+    </record>
+    <record id="menu_burger" model="product.template">
+        <field name="name">Burger</field>
+        <field name="type">consu</field>
+        <field name="list_price">399</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="food_available_online">True</field>
+        <field name="description_sale">Grilled patty, cheese and fresh veggies in a toasted bun.</field>
+    </record>
+    <record id="menu_samosa" model="product.template">
+        <field name="name">Samosa</field>
+        <field name="type">consu</field>
+        <field name="list_price">30</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="food_available_online">True</field>
+        <field name="description_sale">Crispy pastry filled with spiced potatoes and peas.</field>
+    </record>
+    <record id="menu_thakali_set" model="product.template">
+        <field name="name">Thakali Set</field>
+        <field name="type">consu</field>
+        <field name="list_price">350</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="food_available_online">True</field>
+        <field name="food_category_id" ref="category_thakali"/>
+        <field name="description_sale">Dal, bhat, tarkari, achar and a side of greens, Thakali style.</field>
+    </record>
+    <record id="menu_newari_khaja" model="product.template">
+        <field name="name">Newari Khaja Set</field>
+        <field name="type">consu</field>
+        <field name="list_price">320</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="food_available_online">True</field>
+        <field name="food_category_id" ref="category_newari"/>
+        <field name="description_sale">Beaten rice, choila, bara and pickles, a Newari khaja platter.</field>
+    </record>
+</odoo>

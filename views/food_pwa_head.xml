@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="food_pwa_head" model="ir.ui.view">
+        <field name="name">food.ordering.pwa.head</field>
+        <field name="inherit_id" ref="website.layout"/>
+        <field name="arch" type="xml">
+            <xpath expr="//head" position="inside">
+                <t t-if="request.httprequest.path.startswith('/food')">
+                    <link rel="manifest" href="/food/manifest.webmanifest"/>
+                    <meta name="theme-color" content="#e4232c"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+                    <meta name="apple-mobile-web-app-title" content="Food Ordering"/>
+                    <link rel="apple-touch-icon" href="/food_ordering/static/src/img/pwa-icon-192.png"/>
+                </t>
+            </xpath>
+        </field>
+    </record>
+</odoo>

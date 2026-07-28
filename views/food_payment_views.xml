@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="food_cash_session_list" model="ir.ui.view">
+        <field name="name">food.cash.session.list</field>
+        <field name="model">food.cash.session</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state == 'open'">
+                <field name="opened_by_user_id"/><field name="opened_at"/><field name="opening_cash"/>
+                <field name="sale_total"/><field name="refund_total"/>
+                <field name="closing_cash_expected"/><field name="closing_cash_actual"/><field name="difference"/>
+                <field name="closed_by_user_id"/><field name="closed_at"/><field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+    <record id="food_cash_session_form" model="ir.ui.view">
+        <field name="name">food.cash.session.form</field>
+        <field name="model">food.cash.session</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="opened_by_user_id"/>
+                            <field name="opened_by_device_id"/>
+                            <field name="opened_at"/>
+                            <field name="opening_cash"/>
+                            <field name="state" widget="badge"/>
+                        </group>
+                        <group>
+                            <field name="sale_total"/>
+                            <field name="refund_total"/>
+                            <field name="cash_in_total"/>
+                            <field name="cash_out_total"/>
+                            <field name="closing_cash_expected"/>
+                            <field name="closing_cash_actual"/>
+                            <field name="difference"/>
+                        </group>
+                    </group>
+                    <field name="notes"/>
+                    <notebook>
+                        <page string="Movements">
+                            <field name="movement_ids" readonly="1">
+                                <list><field name="create_date"/><field name="movement_type"/><field name="amount"/><field name="reason"/><field name="order_id"/></list>
+                            </field>
+                        </page>
+                        <page string="Payments">
+                            <field name="payment_ids" readonly="1">
+                                <list><field name="create_date"/><field name="order_id"/><field name="payment_type"/><field name="amount"/></list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_food_cash_sessions" model="ir.actions.act_window">
+        <field name="name">Cash Sessions</field><field name="res_model">food.cash.session</field><field name="view_mode">list,form</field>
+    </record>
+
+    <record id="food_payment_list" model="ir.ui.view">
+        <field name="name">food.payment.list</field>
+        <field name="model">food.payment</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="payment_type == 'refund'">
+                <field name="create_date"/><field name="order_id"/><field name="payment_type"/><field name="method"/>
+                <field name="amount"/><field name="reference"/><field name="cash_session_id"/>
+                <field name="created_by_user_id"/><field name="created_by_device_id"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_food_payments" model="ir.actions.act_window">
+        <field name="name">Payments &amp; Refunds</field><field name="res_model">food.payment</field><field name="view_mode">list,form</field>
+    </record>
+
+    <record id="food_order_event_list" model="ir.ui.view">
+        <field name="name">food.order.event.list</field>
+        <field name="model">food.order.event</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="create_date"/><field name="order_id"/><field name="event_type"/>
+                <field name="previous_status"/><field name="new_status"/><field name="reason"/>
+                <field name="actor_user_id"/><field name="actor_device_id"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_food_order_events" model="ir.actions.act_window">
+        <field name="name">Order Audit Log</field><field name="res_model">food.order.event</field><field name="view_mode">list,form</field>
+    </record>
+
+    <record id="food_settings_form" model="ir.ui.view">
+        <field name="name">food.settings.form</field>
+        <field name="model">food.settings</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="own_cup_discount"/>
+                        <field name="require_cash_session"/>
+                        <field name="allow_cancel_from_ready"/>
+                        <field name="manager_pin_set"/>
+                        <field name="manager_pin" password="True"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_apply" type="object" string="Save" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_food_settings" model="ir.actions.act_window">
+        <field name="name">Food Ordering Settings</field>
+        <field name="res_model">food.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_food_cash_sessions" name="Cash Sessions" parent="food_ordering.menu_food_root" action="action_food_cash_sessions" sequence="40" groups="food_ordering.group_food_manager"/>
+    <menuitem id="menu_food_payments" name="Payments &amp; Refunds" parent="food_ordering.menu_food_root" action="action_food_payments" sequence="41" groups="food_ordering.group_food_manager"/>
+    <menuitem id="menu_food_order_events" name="Audit Log" parent="food_ordering.menu_food_root" action="action_food_order_events" sequence="42" groups="food_ordering.group_food_manager"/>
+    <menuitem id="menu_food_settings" name="Settings" parent="food_ordering.menu_food_root" action="action_food_settings" sequence="90" groups="food_ordering.group_food_manager"/>
+</odoo>

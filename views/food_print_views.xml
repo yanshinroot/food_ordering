@@ -4,9 +4,9 @@
         <field name="name">food.print.job.list</field>
         <field name="model">food.print.job</field>
         <field name="arch" type="xml">
-            <list>
-                <field name="create_date"/><field name="order_id"/><field name="target"/><field name="state" widget="badge"/><field name="device_id"/><field name="attempts"/><field name="error_message"/>
-                <button name="action_retry" type="object" string="Retry" invisible="state != 'failed'"/>
+            <list decoration-danger="state in ('failed', 'dead_letter')">
+                <field name="create_date"/><field name="order_id"/><field name="target"/><field name="state" widget="badge"/><field name="device_id"/><field name="attempts"/><field name="is_reprint"/><field name="error_message"/>
+                <button name="action_retry" type="object" string="Retry" invisible="state not in ('failed', 'dead_letter')"/>
             </list>
         </field>
     </record>
@@ -15,11 +15,44 @@
     </record>
     <record id="food_printer_device_list" model="ir.ui.view">
         <field name="name">food.printer.device.list</field><field name="model">food.printer.device</field>
-        <field name="arch" type="xml"><list><field name="name"/><field name="target"/><field name="connection_state" widget="badge" decoration-success="connection_state == 'online'" decoration-danger="connection_state == 'offline'"/><field name="queued_jobs"/><field name="failed_jobs" decoration-danger="failed_jobs &gt; 0"/><field name="printer_type"/><field name="printer_address"/><field name="last_seen_at"/><field name="active"/></list></field>
+        <field name="arch" type="xml"><list><field name="name"/><field name="target"/><field name="connection_state" widget="badge" decoration-success="connection_state == 'online'" decoration-danger="connection_state == 'offline'"/><field name="queued_jobs"/><field name="failed_jobs" decoration-danger="failed_jobs &gt; 0"/><field name="printer_type"/><field name="printer_address"/><field name="app_version"/><field name="last_seen_at"/><field name="active"/></list></field>
     </record>
     <record id="food_printer_device_form" model="ir.ui.view">
         <field name="name">food.printer.device.form</field><field name="model">food.printer.device</field>
-        <field name="arch" type="xml"><form><header><button name="action_rotate_key" type="object" string="Rotate Device Key" class="btn-secondary" confirm="The connected Android app or print agent must be updated with the new key. Continue?"/></header><sheet><group><field name="name"/><field name="target"/><field name="device_key" password="True"/><field name="connection_state" widget="badge"/><field name="queued_jobs"/><field name="failed_jobs"/><field name="printer_type"/><field name="printer_address"/><field name="active"/><field name="last_seen_at" readonly="1"/></group></sheet></form></field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_rotate_key" type="object" string="Rotate Device Key" class="btn-secondary" confirm="The connected Android app or print agent must be updated with the new key. Continue?"/>
+                    <button name="action_revoke" type="object" string="Revoke" class="btn-danger" invisible="not active" confirm="This device will immediately lose access. Continue?"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="target"/>
+                            <field name="branch"/>
+                            <field name="device_uuid" readonly="1"/>
+                            <field name="app_version" readonly="1"/>
+                            <field name="connection_state" widget="badge"/>
+                            <field name="queued_jobs"/>
+                            <field name="failed_jobs"/>
+                            <field name="active"/>
+                            <field name="revoked_at" readonly="1" invisible="active"/>
+                            <field name="revoked_reason" readonly="1" invisible="active"/>
+                            <field name="last_seen_at" readonly="1"/>
+                            <field name="last_ip" readonly="1"/>
+                        </group>
+                        <group string="Printer">
+                            <field name="printer_type"/>
+                            <field name="printer_address"/>
+                            <field name="paper_width_mm"/>
+                            <field name="cutter_enabled"/>
+                            <field name="encoding"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
     </record>
     <record id="action_food_printer_devices" model="ir.actions.act_window">
         <field name="name">Printer Devices</field><field name="res_model">food.printer.device</field><field name="view_mode">list,form</field>

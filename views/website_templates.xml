@@ -1,41 +1,97 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <template id="food_welcome" name="Food Ordering Welcome">
+        <t t-call="website.layout">
+            <t t-set="body_classname" t-value="'fo-site'"/>
+            <div id="wrap" class="fo-app dk-shell dk-welcome">
+                <i class="fa fa-motorcycle dk-welcome-scooter" aria-hidden="true"/>
+                <div class="dk-welcome-art" aria-hidden="true"><span>🥟</span></div>
+                <img class="dk-wordmark-logo" src="/food_ordering/static/src/img/foodorderlogo-clean.png" alt="Food Ordering"/>
+                <span class="dk-welcome-rule"/>
+                <a class="dk-get-started" href="/food">Get Started</a>
+                <button type="button" class="dk-install-btn" data-install-app="" hidden="hidden"><i class="fa fa-mobile" aria-hidden="true"/> Add to Home Screen</button>
+            </div>
+        </t>
+    </template>
+
+    <template id="food_qr_page" name="Food Ordering QR Code">
+        <t t-call="website.layout">
+            <t t-set="body_classname" t-value="'fo-site'"/>
+            <div id="wrap" class="fo-app dk-qr-page">
+                <div class="dk-qr-card">
+                    <h1>Scan to Order</h1>
+                    <img t-att-src="'/food/qr.png?size=14'" alt="QR code to the food ordering page"/>
+                    <p t-out="food_url"/>
+                    <button onclick="window.print()" class="dk-qr-print-btn" type="button">Print</button>
+                </div>
+            </div>
+        </t>
+    </template>
+
     <template id="food_catalog" name="Food Ordering Catalog">
         <t t-call="website.layout">
             <t t-set="body_classname" t-value="'fo-site'"/>
-            <div id="wrap" class="fo-app" t-att-data-csrf="request.csrf_token()" data-cart-endpoint="/food/cart/update" t-att-data-currency="currency_name" t-att-data-discount="own_cup_discount">
-                <header class="fo-nav">
-                    <a class="fo-logo" href="/food" aria-label="Food Ordering home">
+            <div id="wrap" class="fo-app dk-shell" t-att-data-csrf="request.csrf_token()" data-cart-endpoint="/food/cart/update" t-att-data-currency="currency_name" t-att-data-discount="own_cup_discount">
+                <script type="application/json" id="fo-catalog-data" t-out="catalog_data_b64"/>
+                <div class="fo-offline-banner" data-offline-banner="" role="status" aria-live="polite" hidden="hidden">
+                    <i class="fa fa-wifi" aria-hidden="true"/><span data-offline-text="">You're offline. Browsing the saved menu.</span>
+                </div>
+                <header class="fo-nav dk-nav">
+                    <a class="dk-desktop-logo" href="/food" aria-label="Food Ordering home">
                         <img src="/food_ordering/static/src/img/foodorderlogo-clean.png" alt="Food Ordering"/>
                     </a>
-                    <nav class="fo-icon-nav" aria-label="Main navigation">
-                        <a href="#menu" class="fo-nav-icon" aria-label="Menu" title="Menu"><i class="fa fa-th-large" aria-hidden="true"/></a>
+                    <h1 class="dk-nav-title">Menu</h1>
+                    <nav class="dk-desktop-icon-nav" aria-label="Main navigation">
                         <a href="/food/orders" class="fo-nav-icon" aria-label="Recent orders" title="Recent orders"><i class="fa fa-history" aria-hidden="true"/><span t-if="recent_order_count" class="fo-nav-count" t-out="recent_order_count"/></a>
+                        <button class="fo-cart-trigger fo-nav-icon" type="button" data-cart-open="" aria-label="My order" title="My order">
+                            <i class="fa fa-shopping-bag" aria-hidden="true"/>
+                            <span class="fo-cart-count" data-cart-count="" t-out="cart_count"/>
+                        </button>
                     </nav>
-                    <button class="fo-cart-trigger fo-nav-icon" type="button" data-cart-open="" aria-label="My order" title="My order">
-                        <i class="fa fa-shopping-bag" aria-hidden="true"/>
-                        <span class="fo-cart-count" data-cart-count="" t-out="cart_count"/>
-                    </button>
+                    <span t-if="not request.env.user._is_public()" class="dk-avatar" aria-hidden="true"><i class="fa fa-user-circle" aria-hidden="true"/></span>
                 </header>
 
                 <main>
                     <section class="fo-menu-section" id="menu">
-                        <div class="fo-menu-toolbar">
-                            <label class="fo-search"><i class="fa fa-search" aria-hidden="true"/><input type="search" placeholder="Search the menu" aria-label="Search menu" data-menu-search=""/></label>
-                            <div class="fo-filter-row" role="group" aria-label="Filter menu">
+                        <div class="fo-menu-toolbar dk-toolbar">
+                            <label class="fo-search"><i class="fa fa-search" aria-hidden="true"/><input type="search" placeholder="Search..." aria-label="Search menu" data-menu-search=""/></label>
+                            <div class="dk-desktop-filter-row" role="group" aria-label="Filter menu">
                                 <button class="is-active" type="button" data-filter="all">All</button>
-                                <button type="button" data-filter="drink">Drinks</button>
-                                <button type="button" data-filter="meal">Meals</button>
+                                <t t-foreach="menu_categories" t-as="category">
+                                    <button type="button" t-att-data-filter="category.id" t-out="category.name"/>
+                                </t>
                             </div>
                         </div>
+                        <div class="dk-category-row" role="group" aria-label="Filter menu">
+                            <button class="dk-category-chip is-active" type="button" data-filter="all"><span class="dk-category-icon" aria-hidden="true">🍽</span><span>All</span></button>
+                            <t t-foreach="menu_categories" t-as="category">
+                                <button class="dk-category-chip" type="button" t-att-data-filter="category.id">
+                                    <span class="dk-category-icon" aria-hidden="true" t-out="category.icon or '🍽️'"/>
+                                    <span t-out="category.name"/>
+                                </button>
+                            </t>
+                        </div>
+
+                        <t t-if="promotion_banner">
+                            <span class="dk-eyebrow">Hot Today</span>
+                            <div class="dk-promo-banner">
+                                <div class="dk-promo-copy">
+                                    <strong t-out="promotion_banner.banner_headline or promotion_banner.name"/>
+                                    <span t-if="promotion_banner.banner_subtext" t-out="promotion_banner.banner_subtext"/>
+                                </div>
+                                <div class="dk-promo-art" aria-hidden="true">🥤</div>
+                            </div>
+                        </t>
+
+                        <h2 class="dk-section-title">Popular</h2>
                         <div class="fo-product-grid" data-product-grid="">
                             <t t-foreach="products" t-as="template">
                                 <t t-set="product" t-value="template.product_variant_id"/>
-                                <article class="fo-product-card" data-product-card="" t-att-data-name="template.name.lower()" t-att-data-category="template.food_is_beverage and 'drink' or 'meal'">
+                                <article class="fo-product-card" data-product-card="" t-att-data-product-tmpl-id="template.id" t-att-data-name="template.name.lower()" t-att-data-category="template.food_category_id.id or 0">
                                     <div class="fo-product-media">
                                         <img t-if="product_images.get(template.id)" t-att-src="product_images.get(template.id)" t-att-alt="template.name" loading="lazy"/>
-                                        <div t-else="" class="fo-image-placeholder">Fresh today</div>
-                                        <span class="fo-category-badge" t-out="template.food_is_beverage and 'Drink' or 'Meal'"/>
+                                        <div t-else="" class="fo-image-placeholder"><span t-out="template.food_category_id.icon or '🍽️'"/></div>
+                                        <span t-if="template.food_category_id" class="fo-category-badge" t-out="template.food_category_id.name"/>
                                         <span t-if="template.food_own_cup_eligible" class="fo-cup-badge">Own cup −<t t-out="'%.0f' % own_cup_discount"/></span>
                                     </div>
                                     <div class="fo-product-body">
@@ -43,15 +99,32 @@
                                             <h3 t-out="template.name"/>
                                             <strong><span t-field="template.list_price" t-options='{"widget": "monetary", "display_currency": website.company_id.currency_id}'/></strong>
                                         </div>
-                                        <p t-out="template.description_sale or (template.food_is_beverage and 'Freshly made and perfectly chilled.' or 'Made fresh today with quality ingredients.')"/>
-                                        <button class="fo-add-button" type="button" data-quick-add="" t-att-data-product-id="product.id" t-att-data-own-cup-eligible="template.food_own_cup_eligible and '1' or '0'"><span>Add</span><b>+</b></button>
+                                        <p t-out="template.description_sale or 'Made fresh today with quality ingredients.'"/>
+                                        <button class="fo-add-button dk-order-btn" type="button" data-quick-add="" t-att-data-product-id="product.id" t-att-data-product-tmpl-id="template.id" t-att-data-own-cup-eligible="template.food_own_cup_eligible and '1' or '0'" aria-haspopup="dialog"><span>Order</span></button>
                                     </div>
                                 </article>
                             </t>
                         </div>
-                        <div class="fo-no-results" data-no-results="" hidden="hidden">Nothing matched your search. Try another word.</div>
+                        <div class="fo-no-results" data-no-results="" hidden="hidden" role="status">Nothing matched your search. Try another word.</div>
+                        <div class="fo-empty-catalog" data-empty-catalog="" t-att-hidden="products and 'hidden' or None" role="status">
+                            <span aria-hidden="true">🍽️</span>
+                            <h3>No items available right now</h3>
+                            <p>Please check back soon.</p>
+                        </div>
                     </section>
                 </main>
+
+                <nav class="dk-bottom-nav" aria-label="Primary">
+                    <a class="dk-bottom-nav-item is-active" href="/food" aria-label="Home"><i class="fa fa-home" aria-hidden="true"/><span>Home</span></a>
+                    <button class="dk-bottom-nav-item" type="button" data-cart-open="" aria-label="My order">
+                        <i class="fa fa-shopping-cart" aria-hidden="true"/><span>Cart</span>
+                        <span class="fo-cart-count dk-badge" data-cart-count="" t-out="cart_count"/>
+                    </button>
+                    <a class="dk-bottom-nav-item" href="/food/orders" aria-label="Recent orders">
+                        <i class="fa fa-refresh" aria-hidden="true"/><span>Reorder</span>
+                        <span t-if="recent_order_count" class="fo-nav-count dk-badge" t-out="recent_order_count"/>
+                    </a>
+                </nav>
 
                 <div class="fo-product-dialog-backdrop" data-product-dialog-close="" hidden="hidden"/>
                 <section class="fo-product-dialog" data-product-dialog="" role="dialog" aria-modal="true" aria-labelledby="fo-product-dialog-title" aria-hidden="true">
@@ -60,9 +133,11 @@
                     <div class="fo-product-dialog-content">
                         <span class="fo-eyebrow">ADD TO YOUR ORDER</span>
                         <div class="fo-product-dialog-heading"><div><h2 id="fo-product-dialog-title" data-product-dialog-name=""/><p data-product-dialog-description=""/></div><strong data-product-dialog-price=""/></div>
-                        <div class="fo-product-dialog-section"><div><strong>Quantity</strong><small>How many would you like?</small></div><div class="fo-dialog-stepper"><button type="button" data-product-quantity-delta="-1">−</button><b data-product-quantity="">1</b><button type="button" data-product-quantity-delta="1">+</button></div></div>
-                        <div class="fo-product-dialog-section fo-product-own-cup" data-product-own-cup-row="" hidden="hidden"><div><strong>Bring your own cups</strong><small>Save <t t-out="'%.0f' % own_cup_discount"/> <t t-out="currency_name"/> for each cup</small></div><div class="fo-dialog-stepper"><button type="button" data-product-cup-delta="-1">−</button><b><span data-product-cup-quantity="">0</span> / <span data-product-cup-limit="">1</span></b><button type="button" data-product-cup-delta="1">+</button></div></div>
+                        <div class="fo-product-dialog-section"><div><strong>Quantity</strong><small>How many would you like?</small></div><div class="fo-dialog-stepper"><button type="button" data-product-quantity-delta="-1" aria-label="Decrease quantity">−</button><b data-product-quantity="" aria-live="polite">1</b><button type="button" data-product-quantity-delta="1" aria-label="Increase quantity">+</button></div></div>
+                        <div data-product-modifiers="" class="fo-product-modifiers"/>
+                        <div class="fo-product-dialog-section fo-product-own-cup" data-product-own-cup-row="" hidden="hidden"><div><strong>Bring your own cups</strong><small>Save <t t-out="'%.0f' % own_cup_discount"/> <t t-out="currency_name"/> for each cup</small></div><div class="fo-dialog-stepper"><button type="button" data-product-cup-delta="-1" aria-label="Decrease own-cup quantity">−</button><b aria-live="polite"><span data-product-cup-quantity="">0</span> / <span data-product-cup-limit="">1</span></b><button type="button" data-product-cup-delta="1" aria-label="Increase own-cup quantity">+</button></div></div>
                         <label class="fo-product-dialog-note"><span>Item note <small>Optional</small></span><textarea rows="3" maxlength="300" data-product-note="" placeholder="e.g. no ice, less spicy…"/></label>
+                        <p class="fo-customize-error" data-product-modifier-error="" hidden="hidden" role="alert"/>
                         <button class="fo-product-dialog-submit" type="button" data-product-dialog-submit=""><span>Add to basket</span><strong data-product-dialog-total=""/></button>
                     </div>
                 </section>
@@ -82,7 +157,7 @@
                             <t t-foreach="cart_lines" t-as="line">
                                 <div class="fo-cart-line" t-att-data-line-id="line['line_key']">
                                     <img t-att-src="line['image_url']" t-att-alt="line['name']"/>
-                                    <div class="fo-cart-line-info"><strong t-out="line['name']"/><small><span t-out="'%.0f' % line['price']"/> <t t-out="currency_name"/></small><div class="fo-stepper"><button type="button" data-cart-delta="-1" aria-label="Decrease quantity">−</button><span t-out="line['quantity']"/><button type="button" data-cart-delta="1" aria-label="Increase quantity">+</button></div></div>
+                                    <div class="fo-cart-line-info"><strong t-out="line['name']"/><small class="fo-modifier-summary" t-if="line.get('modifier_summary')" t-out="line['modifier_summary']"/><small><span t-out="'%.0f' % line['price']"/> <t t-out="currency_name"/></small><div class="fo-stepper"><button type="button" data-cart-delta="-1" aria-label="Decrease quantity">−</button><span t-out="line['quantity']"/><button type="button" data-cart-delta="1" aria-label="Increase quantity">+</button></div></div>
                                     <div class="fo-cart-line-end"><strong><span t-out="'%.0f' % line['line_total']"/> <t t-out="currency_name"/></strong><button type="button" data-cart-remove="" aria-label="Remove item"><i class="fa fa-trash-o" aria-hidden="true"/></button></div>
                                     <div class="fo-line-actions">
                                         <div t-if="line['own_cup_eligible']" class="fo-cart-cup-qty"><span>Own cups <small>Save <t t-out="'%.0f' % own_cup_discount"/> each</small></span><div class="fo-cup-stepper"><button type="button" data-own-cup-delta="-1" t-att-disabled="not line['own_cup_quantity'] and 'disabled' or None">−</button><b><t t-out="line['own_cup_quantity']"/> / <t t-out="line['quantity']"/></b><button type="button" data-own-cup-delta="1" t-att-disabled="line['own_cup_quantity'] >= line['quantity'] and 'disabled' or None">+</button></div></div>
@@ -95,16 +170,24 @@
                         <div class="fo-cart-footer">
                             <div class="fo-cart-delivery" data-delivery-pill="" t-att-hidden="not cart_count and 'hidden' or None"><i class="fa fa-clock-o" aria-hidden="true"/><span><strong>20–30 min</strong><small>Office delivery after order confirmation</small></span></div>
                             <div class="fo-cup-reminder"><i class="fa fa-leaf" aria-hidden="true"/><p><strong>Bring your own cup</strong><small>Switch it on per eligible drink and save <t t-out="'%.0f' % own_cup_discount"/> <t t-out="currency_name"/>.</small></p></div>
-                            <div class="fo-cart-totals"><div><span>Subtotal</span><strong data-cart-subtotal=""><t t-out="'%.0f' % cart_subtotal"/> <t t-out="currency_name"/></strong></div><div class="fo-cart-discount" t-att-hidden="not cart_discount and 'hidden' or None"><span>Own-cup saving</span><strong data-cart-discount="">−<t t-out="'%.0f' % cart_discount"/> <t t-out="currency_name"/></strong></div><div class="fo-subtotal"><span>Total</span><strong data-cart-total=""><t t-out="'%.0f' % cart_total"/> <t t-out="currency_name"/></strong></div></div>
+                            <div class="fo-cart-totals">
+                                <div><span>Subtotal</span><strong data-cart-subtotal=""><t t-out="'%.0f' % cart_subtotal"/> <t t-out="currency_name"/></strong></div>
+                                <div class="fo-cart-modifiers" t-att-hidden="not cart_modifier_total and 'hidden' or None"><span>Add-ons</span><strong data-cart-modifier-total=""><t t-out="'%.0f' % cart_modifier_total"/> <t t-out="currency_name"/></strong></div>
+                                <div class="fo-cart-discount" t-att-hidden="not cart_discount and 'hidden' or None"><span>Own-cup saving</span><strong data-cart-discount="">−<t t-out="'%.0f' % cart_discount"/> <t t-out="currency_name"/></strong></div>
+                                <div class="fo-cart-promotion" t-att-hidden="not cart_promotion_discount and 'hidden' or None"><span>Promotion<t t-if="cart_promotion_names"> · <t t-out="', '.join(cart_promotion_names)"/></t></span><strong data-cart-promotion-discount="">−<t t-out="'%.0f' % cart_promotion_discount"/> <t t-out="currency_name"/></strong></div>
+                                <div class="fo-subtotal"><span>Total</span><strong data-cart-total=""><t t-out="'%.0f' % cart_total"/> <t t-out="currency_name"/></strong></div>
+                            </div>
                             <button type="button" data-checkout-toggle="" t-att-class="not cart_lines and 'fo-checkout-button is-disabled' or 'fo-checkout-button'" t-att-disabled="not cart_lines and 'disabled' or None"><span>Continue to details</span><i class="fa fa-arrow-right" aria-hidden="true"/></button>
                         </div>
                     </section>
 
                     <section class="fo-cart-step fo-details-step" data-cart-step="details" hidden="hidden">
                         <div class="fo-details-copy"><h3>Where should we bring it?</h3><p>No account needed. We only use these details for this order.</p></div>
-                        <p t-if="checkout_error" class="fo-inline-error"><i class="fa fa-exclamation-circle" aria-hidden="true"/> Enter your name, phone, department and floor.</p>
-                        <form action="/food/order/submit" method="post" class="fo-basket-form">
+                        <p t-if="checkout_error" class="fo-inline-error" data-submit-error="" role="alert"><i class="fa fa-exclamation-circle" aria-hidden="true"/> <span>Enter your name, phone, department and floor.</span></p>
+                        <p t-else="" class="fo-inline-error" data-submit-error="" role="alert" hidden="hidden"><i class="fa fa-exclamation-circle" aria-hidden="true"/> <span/></p>
+                        <form action="/food/order/submit" method="post" class="fo-basket-form" data-checkout-form="">
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <input type="hidden" name="idempotency_key" data-idempotency-key=""/>
                             <label><span>Name</span><input name="name" autocomplete="name" required="required" placeholder="Aung Aung" t-att-value="auto_name or None"/></label>
                             <label><span>Phone number</span><input name="phone" type="tel" inputmode="tel" autocomplete="tel" required="required" placeholder="09 123 456 789" t-att-value="auto_phone or None"/></label>
                             <label><span>Department</span><input name="department" required="required" placeholder="Finance" list="fo-department-list" autocomplete="off"/>
@@ -115,7 +198,7 @@
                             <label><span>Floor</span><input name="floor" required="required" placeholder="5th floor"/></label>
                             <label class="fo-basket-note"><span>Delivery note <small>Optional</small></span><textarea name="note" rows="3" placeholder="Directions for the delivery team…"/></label>
                             <div class="fo-details-total"><span>Total to pay</span><strong data-cart-total=""><t t-out="'%.0f' % cart_total"/> <t t-out="currency_name"/></strong></div>
-                            <button type="submit" class="fo-submit-order"><span>Place my order</span><i class="fa fa-arrow-right" aria-hidden="true"/></button>
+                            <button type="submit" class="fo-submit-order" data-submit-button=""><span data-submit-label="">Place my order</span><i class="fa fa-arrow-right" aria-hidden="true"/></button>
                             <p class="fo-submit-note"><i class="fa fa-lock" aria-hidden="true"/> Sent directly to cashier and kitchen</p>
                         </form>
                     </section>
@@ -174,16 +257,33 @@
         </t>
     </template>
 
+    <template id="food_offline" name="Food Ordering Offline">
+        <t t-call="website.layout">
+            <t t-set="body_classname" t-value="'fo-site'"/>
+            <div id="wrap" class="fo-app dk-shell dk-welcome">
+                <div class="dk-welcome-art" aria-hidden="true"><span>📶</span></div>
+                <h1 style="font-size:22px;font-weight:800;margin:0 0 8px">You're offline</h1>
+                <p style="color:var(--fo-muted);text-align:center;max-width:320px;margin:0 0 20px">
+                    We couldn't reach the menu. Check your connection — any page you've already
+                    visited is still available, but placing a new order needs the internet.
+                </p>
+                <button type="button" class="dk-get-started" onclick="window.location.reload()">Try again</button>
+            </div>
+        </t>
+    </template>
+
     <template id="food_recent_orders" name="Recent Food Orders">
         <t t-call="website.layout">
             <t t-set="body_classname" t-value="'fo-site'"/>
             <div id="wrap" class="fo-app fo-recent-page">
                 <header class="fo-nav"><a class="fo-logo" href="/food"><img src="/food_ordering/static/src/img/foodorderlogo-clean.png" alt="Food Ordering"/></a><a class="fo-back-link" href="/food">← Back to menu</a></header>
                 <main class="fo-recent-shell">
-                    <span class="fo-eyebrow">Your activity</span><h1>Recent orders</h1><p>Orders placed in this browser appear here automatically. On a different device, look them up by phone number.</p>
-                    <form method="get" action="/food/orders" class="fo-phone-search">
-                        <label><span>Find your orders by phone number</span><input type="tel" name="phone" inputmode="tel" placeholder="09 123 456 789" t-att-value="searched_phone or None"/></label>
-                        <button type="submit">Search</button>
+                    <span class="fo-eyebrow">Your activity</span><h1>Recent orders</h1><p>Orders placed in this browser appear here automatically. On another device, paste your order's tracking code or link below.</p>
+                    <p t-if="track_error == 'not_found'" class="fo-inline-error" role="alert"><i class="fa fa-exclamation-circle" aria-hidden="true"/> We couldn't find an order for that code. Double-check it and try again.</p>
+                    <form method="post" action="/food/track" class="fo-phone-search">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <label><span>Have a tracking code or link?</span><input type="text" name="code" autocomplete="off" placeholder="Paste your order link or code"/></label>
+                        <button type="submit">Track order</button>
                     </form>
                     <div t-if="orders" class="fo-recent-list">
                         <a t-foreach="orders" t-as="order" t-att-href="'/food/order/%s' % order.food_access_token" class="fo-recent-card">
@@ -191,7 +291,6 @@
                             <div><span class="fo-recent-status" t-out="dict(order._fields['food_status'].selection).get(order.food_status)"/><strong><span t-field="order.amount_total" t-options='{"widget": "monetary", "display_currency": order.currency_id}'/></strong></div><b>→</b>
                         </a>
                     </div>
-                    <div t-elif="searched_phone" class="fo-recent-empty"><span>○</span><h2>No orders found for that number</h2><p>Double check the phone number and try again.</p></div>
                     <div t-else="" class="fo-recent-empty"><span>○</span><h2>No recent orders yet</h2><p>Your next order will be saved here automatically on this device.</p><a class="fo-primary-action" href="/food">Browse the menu <span>→</span></a></div>
                 </main>
             </div>
@@ -202,16 +301,32 @@
         <t t-call="website.layout">
             <t t-set="body_classname" t-value="'fo-site'"/>
             <t t-set="status_index" t-value="{'pending': 0, 'accepted': 1, 'preparing': 2, 'ready': 3, 'completed': 4}.get(order.food_status, 0)"/>
-            <div id="wrap" class="fo-app fo-status-page">
+            <div id="wrap" class="fo-app fo-status-page" data-order-tracker=""
+                 t-att-data-poll-endpoint="'/api/food/v1/orders/%s' % order.food_access_token"
+                 t-att-data-order-status="order.food_status">
+                <div class="fo-offline-banner" data-offline-banner="" role="status" aria-live="polite" hidden="hidden">
+                    <i class="fa fa-wifi" aria-hidden="true"/><span>You're offline. Showing the last known status.</span>
+                </div>
                 <header class="fo-nav"><a class="fo-logo" href="/food"><img src="/food_ordering/static/src/img/foodorderlogo-clean.png" alt="Food Ordering"/></a><a class="fo-back-link" href="/food">Order again</a></header>
                 <main class="fo-status-shell">
-                    <div class="fo-success-mark">✓</div><span class="fo-eyebrow">Order received</span><h1>Thanks! The kitchen has your order.</h1>
-                    <p class="fo-status-lead">Order <strong t-out="order.name"/> will be delivered to <strong><t t-out="order.food_department"/>, <t t-out="order.food_floor"/></strong>.</p>
+                    <t t-if="order.food_status == 'cancelled'">
+                        <div class="fo-success-mark fo-cancelled-mark">✕</div><span class="fo-eyebrow">Order cancelled</span><h1>This order was cancelled.</h1>
+                        <p class="fo-status-lead" t-if="order.food_cancel_reason">Reason: <strong t-out="order.food_cancel_reason"/></p>
+                    </t>
+                    <t t-else="">
+                        <div class="fo-success-mark">✓</div><span class="fo-eyebrow">Order received</span><h1>Thanks! The kitchen has your order.</h1>
+                        <p class="fo-status-lead">Order <strong t-out="order.name"/> will be delivered to <strong><t t-out="order.food_department"/>, <t t-out="order.food_floor"/></strong>.</p>
+                    </t>
                     <section class="fo-tracker-card">
-                        <div class="fo-live-status"><span class="fo-pulse"/><div><small>Current status</small><strong t-out="dict(order._fields['food_status'].selection).get(order.food_status)"/></div><button type="button" onclick="window.location.reload()">Refresh</button></div>
-                        <div class="fo-timeline">
+                        <div class="fo-live-status">
+                            <span class="fo-pulse" data-status-pulse=""/>
+                            <div><small>Current status</small><strong data-status-label="" t-out="dict(order._fields['food_status'].selection).get(order.food_status)"/></div>
+                            <button type="button" data-refresh-status="">Refresh</button>
+                        </div>
+                        <p class="fo-last-updated"><small>Last updated <span data-last-updated="">just now</span></small></p>
+                        <div class="fo-timeline" t-att-hidden="order.food_status == 'cancelled' and 'hidden' or None" data-timeline="">
                             <t t-foreach="[(0, 'Received'), (1, 'Accepted'), (2, 'Preparing'), (3, 'Ready'), (4, 'Delivered')]" t-as="step">
-                                <div t-att-class="status_index &gt;= step[0] and 'is-complete' or ''"><span><t t-if="status_index &gt; step[0]">✓</t><t t-else="" t-out="step[0] + 1"/></span><small t-out="step[1]"/></div>
+                                <div t-att-class="status_index &gt;= step[0] and 'is-complete' or ''" t-att-data-step="step[0]"><span><t t-if="status_index &gt; step[0]">✓</t><t t-else="" t-out="step[0] + 1"/></span><small t-out="step[1]"/></div>
                             </t>
                         </div>
                     </section>
