@@ -69,4 +69,10 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    // The org.json classes bundled in the Android SDK are stubs on the local
+    // JVM unit-test classpath (they throw at runtime, not just return
+    // defaults) — this puts a real, functional implementation of the same
+    // API on the *test* classpath only. Production code keeps using the
+    // real platform implementation on-device; this has no effect there.
+    testImplementation("org.json:json:20240303")
 }
