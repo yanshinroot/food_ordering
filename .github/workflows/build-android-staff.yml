@@ -1,0 +1,64 @@
+name: Build Cashier/Kitchen Staff APKs
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'android-app/**'
+      - '.github/workflows/build-android-staff.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-apks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+
+      - name: Ensure required Android SDK packages
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0" > /dev/null
+
+      - name: Grant execute permission for gradlew
+        working-directory: android-app
+        run: chmod +x gradlew
+
+      - name: Run unit tests
+        working-directory: android-app
+        run: ./gradlew testCashierDebugUnitTest testKitchenDebugUnitTest --no-daemon
+
+      - name: Lint
+        working-directory: android-app
+        run: ./gradlew lintCashierDebug lintKitchenDebug --no-daemon
+
+      - name: Build Cashier debug APK
+        working-directory: android-app
+        run: ./gradlew assembleCashierDebug --no-daemon
+
+      - name: Build Kitchen debug APK
+        working-directory: android-app
+        run: ./gradlew assembleKitchenDebug --no-daemon
+
+      - name: Upload Cashier APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: food-cashier-debug-${{ github.run_number }}
+          path: android-app/app/build/outputs/apk/cashier/debug/food-cashier-debug.apk
+          retention-days: 30
+
+      - name: Upload Kitchen APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: food-kitchen-debug-${{ github.run_number }}
+          path: android-app/app/build/outputs/apk/kitchen/debug/food-kitchen-debug.apk
+          retention-days: 30
