@@ -35,6 +35,7 @@ import com.foodorder.staff.ui.components.formatMoney
 fun CashierOrderCard(
     order: StaffOrder,
     busy: Boolean,
+    refundEnabled: Boolean,
     onDetails: () -> Unit,
     onAccept: () -> Unit,
     onCancel: () -> Unit,
@@ -98,7 +99,7 @@ fun CashierOrderCard(
                     }
                     "completed", "cancelled" -> {
                         OutlinedButton(onClick = onReprint, enabled = !busy, modifier = Modifier.weight(1f).height(MinTouchTarget)) { Text("Reprint", fontSize = 11.sp) }
-                        if (order.paymentStatus == "paid" || order.paymentStatus == "partially_refunded") {
+                        if (refundEnabled && (order.paymentStatus == "paid" || order.paymentStatus == "partially_refunded")) {
                             OutlinedButton(onClick = onRefund, enabled = !busy, modifier = Modifier.height(MinTouchTarget)) { Text("Refund", fontSize = 10.sp) }
                         }
                     }

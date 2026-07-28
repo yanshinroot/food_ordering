@@ -218,26 +218,26 @@ fun NumericKeypad(onDigit: (Char) -> Unit, onClear: () -> Unit, onBackspace: () 
 fun OrderLinesList(lines: List<com.foodorder.staff.net.StaffOrderLine>, compact: Boolean = false) {
     Column {
         lines.forEach { line ->
-            Row(Modifier.fillMaxWidth().padding(top = if (compact) 7.dp else 12.dp)) {
+            Row(Modifier.fillMaxWidth().padding(top = if (compact) 8.dp else 12.dp)) {
                 Text(
                     "${cleanQuantity(line.quantity)}×",
-                    Modifier.width(if (compact) 28.dp else 40.dp),
+                    Modifier.width(if (compact) 30.dp else 40.dp),
                     color = MaterialTheme.colorScheme.primary,
-                    fontSize = if (compact) 12.sp else 16.sp,
+                    fontSize = if (compact) 13.sp else 16.sp,
                     fontWeight = FontWeight.Bold,
                 )
                 Column {
-                    Text(line.name, fontSize = if (compact) 12.sp else 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text(line.name, fontSize = if (compact) 13.sp else 16.sp, fontWeight = FontWeight.SemiBold)
                     val modifierText = line.modifiers.joinToString("; ") { "${it.group}: ${it.option}" }
                         .ifBlank { line.modifiersSummary }
                     if (modifierText.isNotBlank()) {
-                        Text(modifierText, fontSize = if (compact) 9.sp else 12.sp, color = Color(0xFF17653D))
+                        Text(modifierText, fontSize = if (compact) 10.sp else 12.sp, color = Color(0xFF17653D))
                     }
                     if (line.ownCupQuantity > 0) {
-                        Text("Own cup × ${line.ownCupQuantity}", fontSize = if (compact) 9.sp else 12.sp, color = Color(0xFF17653D))
+                        Text("Own cup × ${line.ownCupQuantity}", fontSize = if (compact) 10.sp else 12.sp, color = Color(0xFF17653D))
                     }
                     if (line.note.isNotBlank()) {
-                        Text("Note: ${line.note}", fontSize = if (compact) 9.sp else 12.sp, color = Color(0xFFA66408), fontWeight = FontWeight.SemiBold)
+                        Text("Note: ${line.note}", fontSize = if (compact) 10.sp else 12.sp, color = Color(0xFFA66408), fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

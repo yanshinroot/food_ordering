@@ -1,5 +1,6 @@
 package com.foodorder.staff.printer
 
+import com.foodorder.staff.PrinterTransport
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -19,26 +20,37 @@ import org.junit.Test
  * this pass deliberately didn't introduce (see the final report's known
  * limitations). What *is* independently unit-tested is the precondition
  * every print attempt is gated on: a device with no printer configured at
- * all must never even ask for jobs.
+ * all must never even ask for jobs — and specifically, only the field
+ * matching the currently-selected transport counts.
  */
 class PrintQueueManagerTest {
     @Test
-    fun `no printer configured when neither network nor usb is set`() {
-        assertFalse(isPrinterConfigured(networkPrinter = "", usbDeviceId = -1))
+    fun `nothing configured on any transport`() {
+        assertFalse(isPrinterConfigured(PrinterTransport.NETWORK, "", -1, ""))
+        assertFalse(isPrinterConfigured(PrinterTransport.USB, "", -1, ""))
+        assertFalse(isPrinterConfigured(PrinterTransport.BLUETOOTH, "", -1, ""))
     }
 
     @Test
-    fun `a network printer address counts as configured`() {
-        assertTrue(isPrinterConfigured(networkPrinter = "192.168.1.50:9100", usbDeviceId = -1))
+    fun `a network printer address counts as configured only for the network transport`() {
+        assertTrue(isPrinterConfigured(PrinterTransport.NETWORK, "192.168.1.50:9100", -1, ""))
+        assertFalse(isPrinterConfigured(PrinterTransport.USB, "192.168.1.50:9100", -1, ""))
     }
 
     @Test
-    fun `a selected usb device counts as configured even with a blank network address`() {
-        assertTrue(isPrinterConfigured(networkPrinter = "", usbDeviceId = 3))
+    fun `a selected usb device counts as configured only for the usb transport`() {
+        assertTrue(isPrinterConfigured(PrinterTransport.USB, "", 3, ""))
+        assertFalse(isPrinterConfigured(PrinterTransport.BLUETOOTH, "", 3, ""))
+    }
+
+    @Test
+    fun `a paired bluetooth address counts as configured only for the bluetooth transport`() {
+        assertTrue(isPrinterConfigured(PrinterTransport.BLUETOOTH, "", -1, "AA:BB:CC:DD:EE:FF"))
+        assertFalse(isPrinterConfigured(PrinterTransport.NETWORK, "", -1, "AA:BB:CC:DD:EE:FF"))
     }
 
     @Test
     fun `blank whitespace network address does not count as configured`() {
-        assertFalse(isPrinterConfigured(networkPrinter = "   ", usbDeviceId = -1))
+        assertFalse(isPrinterConfigured(PrinterTransport.NETWORK, "   ", -1, ""))
     }
 }

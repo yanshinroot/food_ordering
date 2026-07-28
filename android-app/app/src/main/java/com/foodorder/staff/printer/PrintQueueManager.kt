@@ -2,6 +2,7 @@ package com.foodorder.staff.printer
 
 import android.content.Context
 import com.foodorder.staff.PrinterBridge
+import com.foodorder.staff.PrinterTransport
 import com.foodorder.staff.core.ApiResult
 import com.foodorder.staff.net.FoodApiClient
 import com.foodorder.staff.storage.UiPreferences
@@ -22,12 +23,19 @@ data class PrintBatchResult(val printed: Int, val failed: Int)
  * (`FOR UPDATE SKIP LOCKED`) hands it to this device.
  */
 /** Pure — pulled out of PrintQueueManager so it's testable without a real
- *  Context-backed UiPreferences/SharedPreferences instance. */
-fun isPrinterConfigured(networkPrinter: String, usbDeviceId: Int): Boolean =
-    networkPrinter.isNotBlank() || usbDeviceId >= 0
+ *  Context-backed UiPreferences/SharedPreferences instance. Only the field
+ *  matching the selected transport counts — e.g. a leftover network
+ *  address from before switching to USB shouldn't count as "configured". */
+fun isPrinterConfigured(transport: PrinterTransport, networkPrinter: String, usbDeviceId: Int, bluetoothAddress: String): Boolean =
+    when (transport) {
+        PrinterTransport.NETWORK -> networkPrinter.isNotBlank()
+        PrinterTransport.USB -> usbDeviceId >= 0
+        PrinterTransport.BLUETOOTH -> bluetoothAddress.isNotBlank()
+    }
 
 class PrintQueueManager(private val context: Context, private val api: FoodApiClient, private val prefs: UiPreferences) {
-    fun printerConfigured(): Boolean = isPrinterConfigured(prefs.networkPrinter, prefs.usbDeviceId)
+    fun printerConfigured(): Boolean =
+        isPrinterConfigured(prefs.transport, prefs.networkPrinter, prefs.usbDeviceId, prefs.bluetoothAddress)
 
     suspend fun claimAndPrintQueued(): PrintBatchResult {
         if (!printerConfigured()) return PrintBatchResult(0, 0)
@@ -62,7 +70,11 @@ class PrintQueueManager(private val context: Context, private val api: FoodApiCl
                     cutterEnabled = job.cutterEnabled,
                     encoding = job.encoding,
                 )
-                PrinterBridge.print(context, bytes, prefs.networkPrinter, prefs.usbDeviceId)
+                when (prefs.transport) {
+                    PrinterTransport.NETWORK -> PrinterBridge.print(context, bytes, prefs.networkPrinter, -1)
+                    PrinterTransport.USB -> PrinterBridge.print(context, bytes, "", prefs.usbDeviceId)
+                    PrinterTransport.BLUETOOTH -> PrinterBridge.print(context, bytes, "", -1, prefs.bluetoothAddress)
+                }
                 api.acknowledgePrint(job.id, success = true)
                 printed++
             } catch (error: Exception) {

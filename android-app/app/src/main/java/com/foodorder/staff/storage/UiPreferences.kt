@@ -2,6 +2,7 @@ package com.foodorder.staff.storage
 
 import android.content.Context
 import com.foodorder.staff.PrinterProtocol
+import com.foodorder.staff.PrinterTransport
 
 /** Non-sensitive, device-local UI preferences (printer wiring, sound
  *  toggle). Deliberately kept in plain (unencrypted) SharedPreferences and
@@ -18,6 +19,26 @@ class UiPreferences(context: Context) {
     var usbDeviceId: Int
         get() = prefs.getInt("usbDeviceId", -1)
         set(value) = prefs.edit().putInt("usbDeviceId", value).apply()
+
+    var bluetoothAddress: String
+        get() = prefs.getString("bluetoothAddress", "") ?: ""
+        set(value) = prefs.edit().putString("bluetoothAddress", value).apply()
+
+    /** Explicit transport choice. Defaults are inferred from whatever was
+     *  already configured before this setting existed (a network address
+     *  or a chosen USB device), so upgrading doesn't silently drop an
+     *  existing working setup. */
+    var transport: PrinterTransport
+        get() {
+            val stored = prefs.getString("transport", null)
+            if (stored != null) return runCatching { PrinterTransport.valueOf(stored) }.getOrDefault(PrinterTransport.NETWORK)
+            return when {
+                networkPrinter.isNotBlank() -> PrinterTransport.NETWORK
+                usbDeviceId >= 0 -> PrinterTransport.USB
+                else -> PrinterTransport.NETWORK
+            }
+        }
+        set(value) = prefs.edit().putString("transport", value.name).apply()
 
     var protocol: PrinterProtocol
         get() = runCatching { PrinterProtocol.valueOf(prefs.getString("protocol", PrinterProtocol.ESC_POS.name)!!) }

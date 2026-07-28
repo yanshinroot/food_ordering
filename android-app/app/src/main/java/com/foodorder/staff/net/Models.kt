@@ -101,7 +101,12 @@ data class CashSession(
 
 data class CashSessionCloseResult(val sessionId: Int, val expected: Double, val actual: Double, val difference: Double)
 
-data class StaffConfig(val kitchenSlaWarnMinutes: Int, val kitchenSlaLateMinutes: Int)
+data class StaffConfig(
+    val kitchenSlaWarnMinutes: Int,
+    val kitchenSlaLateMinutes: Int,
+    val shiftEnabled: Boolean,
+    val refundEnabled: Boolean,
+)
 
 data class OrderEvent(
     val eventType: String,

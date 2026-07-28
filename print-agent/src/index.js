@@ -124,6 +124,41 @@ function printWindows(data) {
   });
 }
 
+function printBluetooth(data) {
+  return new Promise((resolve, reject) => {
+    if (os.platform() === "win32") {
+      // Windows exposes a paired Bluetooth SPP printer as a virtual COM
+      // port once bonded — no Bluetooth library needed, just talk to the
+      // port like any other serial device via a helper script (same
+      // shell-out pattern as printWindows above).
+      const tempFile = path.join(os.tmpdir(), `food-order-${Date.now()}.bin`);
+      fs.writeFileSync(tempFile, data);
+      const helper = path.join(root, "windows-bluetooth-print.ps1");
+      const child = spawn("powershell.exe", [
+        "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", helper,
+        "-ComPort", config.printer.comPort, "-BaudRate", String(config.printer.baudRate || 9600),
+        "-FilePath", tempFile,
+      ], { windowsHide: true });
+      let error = "";
+      child.stderr.on("data", chunk => { error += chunk.toString(); });
+      child.on("exit", code => {
+        try { fs.unlinkSync(tempFile); } catch (_) {}
+        code === 0 ? resolve() : reject(new Error(error || `Bluetooth print helper exited ${code}`));
+      });
+      child.on("error", reject);
+      return;
+    }
+    // Linux/macOS: BlueZ binds an RFCOMM channel to a device file
+    // (`rfcomm bind rfcomm0 <MAC> 1`, done once at OS level — see
+    // README.md), after which it behaves like any other serial device.
+    // Writing raw bytes to it needs no Bluetooth library at all.
+    fs.writeFile(config.printer.devicePath, data, (error) => {
+      if (error) reject(error);
+      else resolve();
+    });
+  });
+}
+
 async function acknowledge(jobId, success, error = "") {
   const response = await fetch(`${config.serverUrl}/api/food/v1/print/jobs/${jobId}/ack`, {
     method: "POST",
@@ -155,6 +190,7 @@ async function processJob(job) {
     const data = protocol === "sato_sbpl" ? satoReceipt(job.payload) : receipt(job.payload, options);
     if (config.printer.type === "network") await printNetwork(data);
     else if (config.printer.type === "windows") await printWindows(data);
+    else if (config.printer.type === "bluetooth") await printBluetooth(data);
     else throw new Error(`Unsupported printer type: ${config.printer.type}`);
     printedJobs.add(ledgerKey);
     saveLedger();

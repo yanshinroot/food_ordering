@@ -28,6 +28,7 @@ fun CashierToolbar(
     session: CashSession?,
     connected: Boolean,
     failedPrintCount: Int,
+    shiftEnabled: Boolean,
     lastSyncMillis: Long?,
     onOpenSession: () -> Unit,
     onWalkIn: () -> Unit,
@@ -46,9 +47,11 @@ fun CashierToolbar(
             item {
                 Button(onClick = onWalkIn, modifier = Modifier.height(MinTouchTarget)) { Text("+ New walk-in", fontSize = 11.sp) }
             }
-            item {
-                OutlinedButton(onClick = onOpenSession, modifier = Modifier.height(MinTouchTarget)) {
-                    Text(if (session != null) "Shift open" else "Shift closed — tap to open", fontSize = 10.sp)
+            if (shiftEnabled) {
+                item {
+                    OutlinedButton(onClick = onOpenSession, modifier = Modifier.height(MinTouchTarget)) {
+                        Text(if (session != null) "Shift open" else "Shift closed — tap to open", fontSize = 10.sp)
+                    }
                 }
             }
             item { ConnectionChip(if (connected) "Live" else "Offline", connected) }

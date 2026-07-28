@@ -231,6 +231,8 @@ class FoodApiClient(
         StaffConfig(
             kitchenSlaWarnMinutes = json.optInt("kitchen_sla_warn_minutes", 10),
             kitchenSlaLateMinutes = json.optInt("kitchen_sla_late_minutes", 20),
+            shiftEnabled = json.optBoolean("shift_enabled", false),
+            refundEnabled = json.optBoolean("refund_enabled", false),
         )
     }
 

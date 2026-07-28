@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -58,7 +59,7 @@ private data class PendingKitchenAction(val order: StaffOrder, val action: Strin
 @Composable
 fun KitchenHomeScreen(env: AppEnvironment) {
     var orders by remember { mutableStateOf(emptyList<StaffOrder>()) }
-    var config by remember { mutableStateOf(StaffConfig(10, 20)) }
+    var config by remember { mutableStateOf(StaffConfig(10, 20, shiftEnabled = false, refundEnabled = false)) }
     var search by remember { mutableStateOf("") }
     var deptFilter by remember { mutableStateOf("") }
     var connected by remember { mutableStateOf(false) }
@@ -194,8 +195,16 @@ fun KitchenHomeScreen(env: AppEnvironment) {
 
     Column(Modifier.fillMaxSize()) {
         KitchenToolbar(connected, lastSyncMillis, onSettings = { showSettings = true }, onManualRefresh = { scope.launch { ordersPoller.refreshNow(scope) { refreshOrders() } } })
-        OutlinedTextField(search, { search = it }, label = { Text("Search order #, name or phone") }, singleLine = true, modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp))
-        OutlinedTextField(deptFilter, { deptFilter = it }, label = { Text("Filter department/floor") }, singleLine = true, modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp))
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                search, { search = it }, label = { Text("Search", fontSize = 11.sp) }, singleLine = true,
+                textStyle = LocalTextStyle.current.copy(fontSize = 13.sp), modifier = Modifier.weight(1.3f),
+            )
+            OutlinedTextField(
+                deptFilter, { deptFilter = it }, label = { Text("Dept/Floor", fontSize = 11.sp) }, singleLine = true,
+                textStyle = LocalTextStyle.current.copy(fontSize = 13.sp), modifier = Modifier.weight(1f),
+            )
+        }
 
         if (!connected) OfflineBanner(lastSyncMillis?.let(::formatSyncTime))
         else if (statusError) StatusBanner(statusMessage, statusError, false) { scope.launch { refreshOrders() } }

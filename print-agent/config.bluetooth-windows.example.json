@@ -1,0 +1,11 @@
+{
+  "serverUrl": "http://127.0.0.1:8069",
+  "deviceKey": "COPY_FROM_ODOO_PRINTER_DEVICE",
+  "pollIntervalMs": 3000,
+  "protocol": "escpos",
+  "printer": {
+    "type": "bluetooth",
+    "comPort": "COM5",
+    "baudRate": 9600
+  }
+}

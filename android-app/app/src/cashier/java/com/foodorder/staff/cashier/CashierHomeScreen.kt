@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -70,6 +71,7 @@ fun CashierHomeScreen(env: AppEnvironment) {
     var refundOrder by remember { mutableStateOf<StaffOrder?>(null) }
     var detailOrder by remember { mutableStateOf<StaffOrder?>(null) }
     var showSession by remember { mutableStateOf(false) }
+    var config by remember { mutableStateOf(com.foodorder.staff.net.StaffConfig(10, 20, shiftEnabled = false, refundEnabled = false)) }
     var showSettings by remember { mutableStateOf(false) }
     var confirmCancel by remember { mutableStateOf<StaffOrder?>(null) }
     val alertGuard = remember { AlertDedupeGuard() }
@@ -102,6 +104,7 @@ fun CashierHomeScreen(env: AppEnvironment) {
     }
 
     suspend fun refreshSession() {
+        if (!config.shiftEnabled) return
         when (val result = env.apiClient.currentSession()) {
             is ApiResult.Success -> session = result.value
             is ApiResult.Failure -> env.sessionManager.reactTo(result.error)
@@ -143,6 +146,10 @@ fun CashierHomeScreen(env: AppEnvironment) {
         when (val result = env.apiClient.catalog()) {
             is ApiResult.Success -> catalog = result.value
             is ApiResult.Failure -> handleFailure(result.error)
+        }
+        when (val result = env.apiClient.staffConfig()) {
+            is ApiResult.Success -> config = result.value
+            is ApiResult.Failure -> {} // non-fatal — falls back to shift/refund hidden
         }
     }
 
@@ -192,6 +199,7 @@ fun CashierHomeScreen(env: AppEnvironment) {
     Column(Modifier.fillMaxSize()) {
         CashierToolbar(
             session = session, connected = connected, failedPrintCount = failedPrintCount,
+            shiftEnabled = config.shiftEnabled,
             lastSyncMillis = lastSyncMillis, onOpenSession = { showSession = true },
             onWalkIn = {
                 if (catalog.products.isEmpty()) {
@@ -208,8 +216,16 @@ fun CashierHomeScreen(env: AppEnvironment) {
             onSettings = { showSettings = true },
             onManualRefresh = { scope.launch { ordersPoller.refreshNow(scope) { refreshOrders() } } },
         )
-        OutlinedTextField(search, { search = it }, label = { Text("Search order #, name or phone") }, singleLine = true, modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp))
-        OutlinedTextField(deptFilter, { deptFilter = it }, label = { Text("Filter department/floor") }, singleLine = true, modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp))
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                search, { search = it }, label = { Text("Search", fontSize = 11.sp) }, singleLine = true,
+                textStyle = LocalTextStyle.current.copy(fontSize = 13.sp), modifier = Modifier.weight(1.3f),
+            )
+            OutlinedTextField(
+                deptFilter, { deptFilter = it }, label = { Text("Dept/Floor", fontSize = 11.sp) }, singleLine = true,
+                textStyle = LocalTextStyle.current.copy(fontSize = 13.sp), modifier = Modifier.weight(1f),
+            )
+        }
 
         if (!connected) OfflineBanner(lastSyncMillis?.let { formatSyncTime(it) })
         else if (statusError || busyOrderId != null) StatusBanner(statusMessage, statusError, busyOrderId != null) { scope.launch { refreshOrders() } }
@@ -246,6 +262,7 @@ fun CashierHomeScreen(env: AppEnvironment) {
                 items(shown, key = StaffOrder::id) { order ->
                     CashierOrderCard(
                         order = order, busy = busyOrderId == order.id,
+                        refundEnabled = config.refundEnabled,
                         onDetails = { detailOrder = order },
                         onAccept = { runAction(order, "accept") },
                         onCancel = { confirmCancel = order },

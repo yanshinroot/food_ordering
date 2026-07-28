@@ -1,8 +1,11 @@
 package com.foodorder.staff
 
 import android.app.PendingIntent
+import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothSocket
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -10,10 +13,13 @@ import android.graphics.Paint
 import android.hardware.usb.UsbConstants
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
+import android.Manifest
+import android.os.Build
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.net.InetSocketAddress
 import java.net.Socket
+import java.util.UUID
 
 enum class PrinterProtocol(val label: String) {
     ESC_POS("ESC/POS · Nippon POS / thermal"),
@@ -21,7 +27,20 @@ enum class PrinterProtocol(val label: String) {
     TSPL("TSPL2 · 4BARCODE / TSC label"),
 }
 
+/** How the receipt bytes physically reach the printer — independent of
+ *  [PrinterProtocol], which is which command language they're encoded in. */
+enum class PrinterTransport(val label: String) {
+    NETWORK("WiFi/Network"),
+    USB("USB"),
+    BLUETOOTH("Bluetooth"),
+}
+
 data class UsbPrinter(val deviceId: Int, val label: String)
+data class BluetoothPrinter(val address: String, val label: String)
+
+/** Standard Serial Port Profile UUID — practically universal for how
+ *  ESC/POS thermal printers expose themselves over classic Bluetooth. */
+private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
 
 const val DEFAULT_LABEL_WIDTH_MM = 50
 const val DEFAULT_TEXT_SCALE = 2
@@ -272,8 +291,59 @@ object PrinterBridge {
         return false
     }
 
-    fun print(context: Context, data: ByteArray, networkAddress: String, usbDeviceId: Int) {
-        if (networkAddress.isNotBlank()) printNetwork(data, networkAddress) else printUsb(context, data, usbDeviceId)
+    fun bluetoothPermissionGranted(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true // pre-Android-12: normal, install-time permission
+        return context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+    }
+
+    /** Only ever lists already-paired (bonded) devices — thermal printers are
+     *  paired once via Android's own Bluetooth settings like any other
+     *  classic-Bluetooth accessory; this app doesn't do its own discovery/
+     *  pairing UI. Returns empty (rather than throwing) if the permission
+     *  isn't granted yet, so callers can show a "grant permission" prompt
+     *  instead of crashing. */
+    fun bluetoothPrinters(context: Context): List<BluetoothPrinter> {
+        if (!bluetoothPermissionGranted(context)) return emptyList()
+        val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager ?: return emptyList()
+        val adapter = manager.adapter ?: return emptyList()
+        return runCatching {
+            adapter.bondedDevices.map { device -> BluetoothPrinter(device.address, device.name ?: device.address) }
+        }.getOrDefault(emptyList())
+    }
+
+    fun print(
+        context: Context,
+        data: ByteArray,
+        networkAddress: String,
+        usbDeviceId: Int,
+        bluetoothAddress: String = "",
+    ) {
+        when {
+            bluetoothAddress.isNotBlank() -> printBluetooth(context, data, bluetoothAddress)
+            networkAddress.isNotBlank() -> printNetwork(data, networkAddress)
+            else -> printUsb(context, data, usbDeviceId)
+        }
+    }
+
+    private fun printBluetooth(context: Context, data: ByteArray, address: String) {
+        if (!bluetoothPermissionGranted(context)) {
+            throw IllegalStateException("Bluetooth permission not granted. Allow it in Setup, then try again.")
+        }
+        val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+            ?: throw IllegalStateException("Bluetooth is not available on this device")
+        val adapter = manager.adapter ?: throw IllegalStateException("Bluetooth is not available on this device")
+        if (!adapter.isEnabled) throw IllegalStateException("Turn Bluetooth on, then try again")
+        val device = adapter.bondedDevices.firstOrNull { it.address == address }
+            ?: throw IllegalStateException("Printer not paired. Pair it in Android Bluetooth settings first.")
+        var socket: BluetoothSocket? = null
+        try {
+            socket = device.createRfcommSocketToServiceRecord(SPP_UUID)
+            adapter.cancelDiscovery() // discovery in progress slows/blocks a fresh connect attempt
+            socket.connect()
+            socket.outputStream.use { it.write(data); it.flush() }
+        } finally {
+            socket?.close()
+        }
     }
 
     private fun printNetwork(data: ByteArray, address: String) {
