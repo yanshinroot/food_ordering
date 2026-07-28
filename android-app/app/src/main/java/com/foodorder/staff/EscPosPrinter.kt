@@ -1,5 +1,6 @@
 package com.foodorder.staff
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
@@ -302,6 +303,7 @@ object PrinterBridge {
      *  pairing UI. Returns empty (rather than throwing) if the permission
      *  isn't granted yet, so callers can show a "grant permission" prompt
      *  instead of crashing. */
+    @SuppressLint("MissingPermission") // guarded by bluetoothPermissionGranted() above — lint can't see across the call
     fun bluetoothPrinters(context: Context): List<BluetoothPrinter> {
         if (!bluetoothPermissionGranted(context)) return emptyList()
         val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager ?: return emptyList()
@@ -325,6 +327,7 @@ object PrinterBridge {
         }
     }
 
+    @SuppressLint("MissingPermission") // guarded by bluetoothPermissionGranted() above — lint can't see across the call
     private fun printBluetooth(context: Context, data: ByteArray, address: String) {
         if (!bluetoothPermissionGranted(context)) {
             throw IllegalStateException("Bluetooth permission not granted. Allow it in Setup, then try again.")
@@ -335,10 +338,14 @@ object PrinterBridge {
         if (!adapter.isEnabled) throw IllegalStateException("Turn Bluetooth on, then try again")
         val device = adapter.bondedDevices.firstOrNull { it.address == address }
             ?: throw IllegalStateException("Printer not paired. Pair it in Android Bluetooth settings first.")
+        // Deliberately no cancelDiscovery() call here: this app never starts
+        // discovery itself (bluetoothPrinters() only lists already-bonded
+        // devices), and cancelDiscovery() needs BLUETOOTH_SCAN — a permission
+        // this app doesn't hold — so calling it would throw SecurityException
+        // on API 31+ for no actual benefit.
         var socket: BluetoothSocket? = null
         try {
             socket = device.createRfcommSocketToServiceRecord(SPP_UUID)
-            adapter.cancelDiscovery() // discovery in progress slows/blocks a fresh connect attempt
             socket.connect()
             socket.outputStream.use { it.write(data); it.flush() }
         } finally {
